@@ -1,10 +1,12 @@
 import os
 import pickle
+import asyncio
 from typing import List
 from rank_bm25 import BM25Okapi
 
 from infrastructure.storage.base import IKeywordStore
 from schemas.document import ChildNode
+from utils.logger import app_logger
 
 
 class BM25Adapter(IKeywordStore):
@@ -14,15 +16,17 @@ class BM25Adapter(IKeywordStore):
         self.nodes: List[ChildNode] = []
         self.bm25: BM25Okapi = None
 
+        self._lock = asyncio.Lock()
+
         os.makedirs(persist_dir, exist_ok=True)
-        self._load_index()
+        self._load_index_sync()
 
     def _tokenize(self, text: str) -> List[str]:
         if not text:
             return []
         return text.lower().split()
 
-    def _load_index(self):
+    def _load_index_sync(self):
         if os.path.exists(self.index_file):
             try:
                 with open(self.index_file, "rb") as f:
@@ -31,48 +35,63 @@ class BM25Adapter(IKeywordStore):
                     corpus = data.get("corpus", [])
                     if corpus:
                         self.bm25 = BM25Okapi(corpus)
+                app_logger.info(f"Đã load BM25 index với {len(self.nodes)} nodes.")
             except Exception as e:
-                print(f"[Error] Lỗi đọc BM25 Index: {e}")
+                app_logger.error(f"Lỗi đọc BM25 Index: {e}")
 
-    def _save_index(self, corpus: List[List[str]]):
+    def _save_index_sync(self, corpus: List[List[str]]):
         try:
             with open(self.index_file, "wb") as f:
                 pickle.dump({"nodes": self.nodes, "corpus": corpus}, f)
+            app_logger.info("Đã lưu BM25 Index xuống ổ cứng.")
         except Exception as e:
-            print(f"[Error] Lỗi lưu BM25 Index: {e}")
+            app_logger.error(f"Lỗi lưu BM25 Index: {e}")
 
-    def save_children(self, nodes: List[ChildNode]) -> bool:
+    def _build_bm25_sync(self, corpus: List[List[str]]):
+        return BM25Okapi(corpus)
+
+    async def save_children(self, nodes: List[ChildNode]) -> bool:
         if not nodes:
             return True
 
-        try:
-            self.nodes.extend(nodes)
+        async with self._lock:
+            try:
+                self.nodes.extend(nodes)
 
-            corpus = [self._tokenize(node.text_chunk) for node in self.nodes]
-            self.bm25 = BM25Okapi(corpus)
+                corpus = await asyncio.to_thread(
+                    lambda: [self._tokenize(node.text_chunk) for node in self.nodes]
+                )
 
-            self._save_index(corpus)
-            return True
-        except Exception as e:
-            print(f"[Error] Lỗi khi lưu vào BM25: {e}")
-            return False
+                self.bm25 = await asyncio.to_thread(self._build_bm25_sync, corpus)
 
-    def search_keyword(self, query: str, top_k: int = 5) -> List[ChildNode]:
+                await asyncio.to_thread(self._save_index_sync, corpus)
+
+                return True
+            except Exception as e:
+                app_logger.error(f"Lỗi khi lưu vào BM25: {e}")
+                return False
+
+    async def search_keyword(self, query: str, top_k: int = 5) -> List[ChildNode]:
         if not self.bm25 or not self.nodes:
             return []
 
-        tokenized_query = self._tokenize(query)
-        scores = self.bm25.get_scores(tokenized_query)
+        try:
+            tokenized_query = self._tokenize(query)
 
-        top_n_indices = sorted(
-            range(len(scores)), key=lambda i: scores[i], reverse=True
-        )[:top_k]
+            scores = await asyncio.to_thread(self.bm25.get_scores, tokenized_query)
 
-        results = []
-        for idx in top_n_indices:
-            if scores[idx] > 0:
-                node = self.nodes[idx]
-                node.metadata["bm25_score"] = scores[idx]
-                results.append(node)
+            top_n_indices = sorted(
+                range(len(scores)), key=lambda i: scores[i], reverse=True
+            )[:top_k]
 
-        return results
+            results = []
+            for idx in top_n_indices:
+                if scores[idx] > 0:
+                    node = self.nodes[idx].model_copy()
+                    node.metadata["bm25_score"] = float(scores[idx])
+                    results.append(node)
+
+            return results
+        except Exception as e:
+            app_logger.error(f"Lỗi khi tìm kiếm BM25: {e}")
+            return []

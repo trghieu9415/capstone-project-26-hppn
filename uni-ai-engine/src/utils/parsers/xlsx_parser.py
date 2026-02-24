@@ -1,6 +1,7 @@
 import io
 import pandas as pd
 from .base import BaseParser
+from utils.logger import app_logger
 
 
 class XlsxParser(BaseParser):
@@ -22,5 +23,5 @@ class XlsxParser(BaseParser):
 
             return "\n".join(text_parts)
         except Exception as e:
-            print(f"[Error] Lỗi đọc XLSX: {e}")
+            app_logger.error(f"[Error] Lỗi đọc XLSX: {e}")
             return ""

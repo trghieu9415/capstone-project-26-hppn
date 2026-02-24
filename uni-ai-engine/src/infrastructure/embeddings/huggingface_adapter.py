@@ -1,35 +1,26 @@
+import asyncio
 from typing import List
 from sentence_transformers import SentenceTransformer
-
-from core.retrieval.vector_retriever import IEmbeddingService
+from infrastructure.embeddings.base import IEmbeddingService
+from utils.logger import app_logger
 
 
 class HuggingFaceAdapter(IEmbeddingService):
     def __init__(self, model_name: str = "keepitreal/vietnamese-sbert"):
-        print(
-            f"[Info] Đang tải mô hình Embedding: {model_name} (Sẽ hơi lâu ở lần đầu tiên)..."
-        )
+        app_logger.info(f"Đang tải mô hình Embedding: {model_name}...")
         self.model = SentenceTransformer(model_name)
-        print("[Info] Đã tải mô hình Embedding thành công!")
 
-    def embed_text(self, text: str) -> List[float]:
+    def _encode_sync(self, text: str) -> List[float]:
+        return self.model.encode(text).tolist()
+
+    async def embed_text(self, text: str) -> List[float]:
         if not text or not text.strip():
             return []
-
         try:
-            vector = self.model.encode(text)
-            return vector.tolist()
+            return await asyncio.to_thread(self._encode_sync, text)
         except Exception as e:
-            print(f"[Error] Lỗi khi tạo embedding cho text: {e}")
+            app_logger.error(f"Lỗi khi tạo embedding: {e}")
             return []
 
-    def embed_query(self, query: str) -> List[float]:
-        if not query or not query.strip():
-            return []
-
-        try:
-            vector = self.model.encode(query)
-            return vector.tolist()
-        except Exception as e:
-            print(f"[Error] Lỗi khi tạo embedding cho query: {e}")
-            return []
+    async def embed_query(self, query: str) -> List[float]:
+        return await self.embed_text(query)

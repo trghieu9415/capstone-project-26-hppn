@@ -1,16 +1,16 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, AsyncGenerator
 
 
 class ILLMService(ABC):
     @abstractmethod
-    def generate(
+    async def generate(
         self, system_prompt: str, user_prompt: str, temperature: float = 0.0
     ) -> Optional[str]:
         pass
 
     @abstractmethod
-    def generate_stream(
+    async def generate_stream(
         self, system_prompt: str, user_prompt: str, temperature: float = 0.0
-    ):
+    ) -> AsyncGenerator[str, None]:
         pass

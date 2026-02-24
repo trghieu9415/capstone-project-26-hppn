@@ -1,6 +1,7 @@
 import io
 from docx import Document
 from .base import BaseParser
+from utils.logger import app_logger
 
 
 class DocxParser(BaseParser):
@@ -12,5 +13,5 @@ class DocxParser(BaseParser):
             full_text = "\n".join([para.text for para in doc.paragraphs if para.text])
             return full_text
         except Exception as e:
-            print(f"[Error] Lỗi đọc DOCX: {e}")
+            app_logger.error(f"[Error] Lỗi đọc DOCX: {e}")
             return ""

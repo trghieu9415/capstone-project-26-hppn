@@ -25,6 +25,8 @@ data/qdrant_storage/
 models/
 .cache/
 
+logs/
+
 .vscode/
 .idea/
 *.swp

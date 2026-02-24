@@ -1,5 +1,4 @@
 from typing import List
-
 from schemas.document import ParentNode
 
 
@@ -30,12 +29,4 @@ class RAGPromptTemplate:
             )
 
         context_string = "\n\n".join(context_parts)
-
-        prompt = (
-            f"Vui lòng trả lời câu hỏi sau:\n"
-            f"Câu hỏi: {query}\n\n"
-            f"[NGỮ CẢNH]\n"
-            f"{context_string}"
-        )
-
-        return prompt
+        return f"Vui lòng trả lời câu hỏi sau:\nCâu hỏi: {query}\n\n[NGỮ CẢNH]\n{context_string}"

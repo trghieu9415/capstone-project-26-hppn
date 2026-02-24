@@ -1,49 +1,48 @@
 import uuid
 from typing import List, Tuple, Dict, Any
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from schemas.document import ChildNode, ParentNode
+from utils.logger import app_logger
 
 
 class PDRChunker:
     def __init__(
-        self, parent_word_size: int = 400, child_word_size: int = 100, overlap: int = 20
+        self,
+        parent_chunk_size: int = 2000,
+        parent_chunk_overlap: int = 200,
+        child_chunk_size: int = 400,
+        child_chunk_overlap: int = 50,
     ):
-        self.parent_size = parent_word_size
-        self.child_size = child_word_size
-        self.overlap = overlap
+        self.parent_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=parent_chunk_size,
+            chunk_overlap=parent_chunk_overlap,
+            separators=["\n\n", "\n", ".", "!", "?", " ", ""],
+        )
 
-    def _split_text(self, text: str, chunk_size: int, chunk_overlap: int) -> List[str]:
-        words = text.split()
-        chunks = []
-        i = 0
-        while i < len(words):
-            chunk_words = words[i : i + chunk_size]
-            chunks.append(" ".join(chunk_words))
-            i += chunk_size - chunk_overlap
-
-            if chunk_size - chunk_overlap <= 0:
-                break
-
-        return chunks
+        self.child_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=child_chunk_size,
+            chunk_overlap=child_chunk_overlap,
+            separators=["\n", ".", "!", "?", ",", " ", ""],
+        )
 
     def chunk_document(
         self, clean_text: str, source_metadata: Dict[str, Any]
     ) -> Tuple[List[ParentNode], List[ChildNode]]:
+        app_logger.info("Bắt đầu cắt văn bản (Smart Chunking)...")
         parent_nodes = []
         child_nodes = []
 
-        parent_texts = self._split_text(clean_text, self.parent_size, self.overlap)
+        parent_texts = self.parent_splitter.split_text(clean_text)
 
         for p_text in parent_texts:
             p_id = str(uuid.uuid4())
-
             parent_node = ParentNode(
                 id=p_id, full_text=p_text, metadata=source_metadata.copy()
             )
             parent_nodes.append(parent_node)
 
-            c_overlap = min(self.overlap, int(self.child_size / 2))
-            child_texts = self._split_text(p_text, self.child_size, c_overlap)
+            child_texts = self.child_splitter.split_text(p_text)
 
             for c_text in child_texts:
                 c_id = str(uuid.uuid4())
@@ -55,4 +54,7 @@ class PDRChunker:
                 )
                 child_nodes.append(child_node)
 
+        app_logger.info(
+            f"Đã tạo {len(parent_nodes)} Parents và {len(child_nodes)} Children."
+        )
         return parent_nodes, child_nodes

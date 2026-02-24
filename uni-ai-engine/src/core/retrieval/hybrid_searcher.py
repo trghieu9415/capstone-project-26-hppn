@@ -1,7 +1,10 @@
+import asyncio
 from typing import List, Dict
+
 from core.retrieval.vector_retriever import VectorRetriever
 from core.retrieval.keyword_retriever import KeywordRetriever
 from schemas.document import ChildNode
+from utils.logger import app_logger
 
 
 class HybridSearcher:
@@ -15,14 +18,18 @@ class HybridSearcher:
         self.keyword_retriever = keyword_retriever
         self.rrf_k = rrf_k
 
-    def search(self, query: str, top_k: int = 5) -> List[ChildNode]:
+    async def search(self, query: str, top_k: int = 5) -> List[ChildNode]:
         if not query.strip():
             return []
 
         fetch_k = top_k * 2
 
-        vector_results = self.vector_retriever.retrieve(query, top_k=fetch_k)
-        keyword_results = self.keyword_retriever.retrieve(query, top_k=fetch_k)
+        app_logger.debug(f"Bắt đầu Hybrid Search cho query: '{query}'")
+
+        vector_results, keyword_results = await asyncio.gather(
+            self.vector_retriever.retrieve(query, top_k=fetch_k),
+            self.keyword_retriever.retrieve(query, top_k=fetch_k),
+        )
 
         rrf_scores: Dict[str, float] = {}
         node_map: Dict[str, ChildNode] = {}
@@ -30,14 +37,14 @@ class HybridSearcher:
         for rank, node in enumerate(vector_results, start=1):
             if node.id not in rrf_scores:
                 rrf_scores[node.id] = 0.0
-                node_map[node.id] = node
+                node_map[node.id] = node.model_copy(deep=True)
 
             rrf_scores[node.id] += 1.0 / (self.rrf_k + rank)
 
         for rank, node in enumerate(keyword_results, start=1):
             if node.id not in rrf_scores:
                 rrf_scores[node.id] = 0.0
-                node_map[node.id] = node
+                node_map[node.id] = node.model_copy(deep=True)
 
             rrf_scores[node.id] += 1.0 / (self.rrf_k + rank)
 
@@ -48,8 +55,10 @@ class HybridSearcher:
         final_results = []
         for node_id, rrf_score in sorted_items[:top_k]:
             node = node_map[node_id]
-
-            node.metadata["rrf_score"] = rrf_score
+            node.metadata["rrf_score"] = float(rrf_score)
             final_results.append(node)
 
+        app_logger.info(
+            f"Hybrid Search hoàn tất, trả về {len(final_results)} chunks tốt nhất."
+        )
         return final_results

@@ -1,5 +1,4 @@
-from typing import List, Generator
-
+from typing import List, AsyncGenerator
 
 from schemas.document import ParentNode
 from core.generation.prompts import RAGPromptTemplate
@@ -9,13 +8,11 @@ from utils.logger import app_logger
 
 class RAGGenerator:
     def __init__(self, llm_service: ILLMService):
-
         self.llm_service = llm_service
 
-    def generate_answer(
+    async def generate_answer(
         self, query: str, parent_nodes: List[ParentNode], temperature: float = 0.0
     ) -> str:
-
         app_logger.info(
             f"Bắt đầu tạo câu trả lời cho query: '{query}' với {len(parent_nodes)} tài liệu."
         )
@@ -26,7 +23,7 @@ class RAGGenerator:
         app_logger.debug("Đã build prompt thành công. Đang gọi LLM...")
 
         try:
-            answer = self.llm_service.generate(
+            answer = await self.llm_service.generate(
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
                 temperature=temperature,
@@ -38,18 +35,16 @@ class RAGGenerator:
             app_logger.error(f"Lỗi trong quá trình sinh câu trả lời (Generate): {e}")
             return "Hệ thống AI hiện đang bận hoặc gặp sự cố. Vui lòng thử lại sau."
 
-    def generate_stream(
+    async def generate_stream(
         self, query: str, parent_nodes: List[ParentNode], temperature: float = 0.0
-    ) -> Generator[str, None, None]:
-
+    ) -> AsyncGenerator[str, None]:
         app_logger.info(f"Bắt đầu mở luồng stream trả lời cho query: '{query}'")
 
         system_prompt = RAGPromptTemplate.get_system_prompt()
         user_prompt = RAGPromptTemplate.build_user_prompt(query, parent_nodes)
 
         try:
-
-            for chunk in self.llm_service.generate_stream(
+            async for chunk in self.llm_service.generate_stream(
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
                 temperature=temperature,
