@@ -1,0 +1,24 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: "vector_db"
+    ports:
+      - "6333:6333"
+    volumes:
+      - ./data/qdrant_storage:/qdrant/storage
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: "document_db"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: uni_ai_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgres_storage:/var/lib/postgresql/data
+
+networks:
+  default:
+    name: uni-ai-network
