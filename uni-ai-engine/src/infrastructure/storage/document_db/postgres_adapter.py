@@ -20,7 +20,8 @@ class ParentDocumentEntity(Base):
     __tablename__ = "parent_documents"
     id = Column(String(255), primary_key=True)
     full_text = Column(Text, nullable=False)
-    document_metadata = Column("metadata", JSONB, default=dict)
+
+    info = Column("info", JSONB, default=dict)
 
 
 class PostgresAdapter(IDocumentStore):
@@ -40,17 +41,19 @@ class PostgresAdapter(IDocumentStore):
         try:
             async with self.SessionLocal() as session:
                 for node in nodes:
+
                     stmt = insert(ParentDocumentEntity).values(
-                        id=node.id,
+                        id=str(node.id),
                         full_text=node.full_text,
-                        document_metadata=node.metadata,
+                        info=node.info,
                     )
+
                     update_stmt = stmt.on_conflict_do_update(
                         index_elements=["id"],
-                        set_=dict(
-                            full_text=stmt.excluded.full_text,
-                            document_metadata=stmt.excluded.document_metadata,
-                        ),
+                        set_={
+                            "full_text": stmt.excluded.full_text,
+                            "info": stmt.excluded.info,
+                        },
                     )
                     await session.execute(update_stmt)
                 await session.commit()
@@ -72,15 +75,12 @@ class PostgresAdapter(IDocumentStore):
                 entities = result.scalars().all()
 
                 for entity in entities:
+
                     results.append(
                         ParentNode(
                             id=entity.id,
                             full_text=entity.full_text,
-                            metadata=(
-                                entity.document_metadata
-                                if entity.document_metadata
-                                else {}
-                            ),
+                            meta=entity.info if entity.info else {},
                         )
                     )
             return results

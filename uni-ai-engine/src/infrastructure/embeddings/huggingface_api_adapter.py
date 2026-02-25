@@ -2,10 +2,11 @@ import httpx  # DÙNG HTTPX THAY CHO REQUESTS
 from typing import List
 from infrastructure.embeddings.base import IEmbeddingService
 from utils.logger import app_logger
+from configs.settings import settings
 
 
 class HuggingFaceApiAdapter(IEmbeddingService):
-    def __init__(self, api_key: str, model_name: str = "keepitreal/vietnamese-sbert"):
+    def __init__(self, api_key: str, model_name: str = settings.EMBEDDING_MODEL_NAME):
         self.api_url = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{model_name}"
         self.headers = {"Authorization": f"Bearer {api_key}"}
 

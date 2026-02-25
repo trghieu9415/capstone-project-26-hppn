@@ -7,11 +7,9 @@ from utils.logger import app_logger
 
 
 class QdrantAdapter(IVectorStore):
-    def __init__(
-        self, collection_name: str, vector_size: int, path: str = "./data/qdrant_db"
-    ):
+    def __init__(self, collection_name: str, vector_size: int, url: str):
         self.collection_name = collection_name
-        self.client = AsyncQdrantClient(path=path)
+        self.client = AsyncQdrantClient(url=url)
         self.vector_size = vector_size
 
     async def initialize(self):
@@ -40,7 +38,7 @@ class QdrantAdapter(IVectorStore):
             payload = {
                 "parent_id": node.parent_id,
                 "text_chunk": node.text_chunk,
-                **node.metadata,
+                "info": node.info,
             }
 
             points.append(

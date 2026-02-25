@@ -1,14 +1,18 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional, Dict, Any
+from uuid import UUID
+
 
 class BaseNode(BaseModel):
-    id: str
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    id: UUID
+    info: Dict[str, Any] = Field(default_factory=dict)
+
 
 class ParentNode(BaseNode):
     full_text: str
 
+
 class ChildNode(BaseNode):
-    parent_id: str
+    parent_id: UUID
     text_chunk: str
     embedding: Optional[List[float]] = None

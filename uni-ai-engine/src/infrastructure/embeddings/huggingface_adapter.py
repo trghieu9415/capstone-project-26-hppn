@@ -3,10 +3,11 @@ from typing import List
 from sentence_transformers import SentenceTransformer
 from infrastructure.embeddings.base import IEmbeddingService
 from utils.logger import app_logger
+from configs.settings import settings
 
 
 class HuggingFaceAdapter(IEmbeddingService):
-    def __init__(self, model_name: str = "keepitreal/vietnamese-sbert"):
+    def __init__(self, model_name: str = settings.EMBEDDING_MODEL_NAME):
         app_logger.info(f"Đang tải mô hình Embedding: {model_name}...")
         self.model = SentenceTransformer(model_name)
 
