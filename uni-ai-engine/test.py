@@ -5,8 +5,8 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 
 from configs.settings import settings
-from infrastructure.storage.document_db.postgres_adapter import PostgresAdapter
-from infrastructure.storage.vector_db.qdrant_adapter import QdrantAdapter
+from infrastructure.storage.postgres_adapter import PostgresAdapter
+from infrastructure.storage.qdrant_adapter import QdrantAdapter
 from schemas.document import ParentNode, ChildNode
 from utils.logger import app_logger
 import uuid

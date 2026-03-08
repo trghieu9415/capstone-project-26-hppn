@@ -14,7 +14,6 @@ class XlsxParser(BaseParser):
             for sheet_name, df in dfs.items():
                 text_parts.append(f"### Bảng dữ liệu: {sheet_name}")
 
-                # Loại bỏ các dòng/cột rỗng hoàn toàn để tiết kiệm token
                 df.dropna(how="all", inplace=True)
                 df.dropna(axis=1, how="all", inplace=True)
 

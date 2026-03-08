@@ -23,7 +23,7 @@ class RAGPromptTemplate:
 
         context_parts = []
         for i, node in enumerate(parent_nodes, start=1):
-            source_name = node.metadata.get("filename", f"Tài liệu {i}")
+            source_name = node.info.get("filename", f"Tài liệu {i}")
             context_parts.append(
                 f"--- Bắt đầu nguồn: {source_name} ---\n{node.full_text}\n--- Kết thúc nguồn ---"
             )

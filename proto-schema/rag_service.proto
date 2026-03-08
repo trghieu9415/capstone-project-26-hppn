@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package unirag.grpc;
+
+// Cấu hình sinh code cho Java
+option java_multiple_files = true;
+option java_package = "io.hppn.unirag.grpc";
+option java_outer_classname = "RagServiceProto";
+
+// Định nghĩa Service chính
+service AiEngineService {
+    // 1. Gửi file lên để xử lý (Ingestion)
+    rpc IngestDocument (IngestRequest) returns (IngestResponse);
+    
+    // 2. Trả lời câu hỏi (Query)
+    rpc AskQuestion (QueryRequest) returns (QueryResponse);
+    
+    // 3. Trả lời câu hỏi dạng Stream (Dành cho UI gõ từng chữ)
+    rpc AskQuestionStream (QueryRequest) returns (stream QueryStreamResponse);
+}
+
+// ============================================
+// CẤU TRÚC DỮ LIỆU CHUNG
+// ============================================
+
+message DocumentMetadata {
+    string document_id = 1;
+    string user_id = 2;
+    string file_name = 3;
+    optional string folder_id = 4;
+    repeated string tags = 5;
+}
+
+message DocumentFilter {
+    string user_id = 1;
+    optional string document_id = 2;
+    optional string folder_id = 3;
+    repeated string tags = 4;
+}
+
+// MESSAGES CHO INGESTION
+message IngestRequest {
+    bytes file_content = 1; 
+    string file_extension = 2;
+    DocumentMetadata metadata = 3;
+}
+
+message IngestResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+// MESSAGES CHO QUERY (TÌM KIẾM)
+message QueryRequest {
+    string query = 1; 
+    int32 top_k = 2;
+    DocumentFilter filter = 3;
+}
+
+message QueryResponse {
+    string answer = 1;
+}
+
+message QueryStreamResponse {
+    string chunk = 1;
+}

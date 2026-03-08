@@ -1,6 +1,6 @@
 import google.generativeai as genai
 from typing import Optional, AsyncGenerator
-from .base import ILLMService
+from infrastructure.llms.base import ILLMService
 from utils.logger import app_logger
 
 
@@ -20,7 +20,10 @@ class GeminiAdapter(ILLMService):
         )
 
     async def generate(
-        self, system_prompt: str, user_prompt: str, temperature: float = 0.0
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        temperature: float = 0.0
     ) -> Optional[str]:
         try:
             model = self._get_model(system_prompt, temperature)
@@ -35,7 +38,6 @@ class GeminiAdapter(ILLMService):
     ) -> AsyncGenerator[str, None]:
         try:
             model = self._get_model(system_prompt, temperature)
-            # DÙNG HÀM ASYNC VÀ ASYNC FOR
             response = await model.generate_content_async(user_prompt, stream=True)
             async for chunk in response:
                 if chunk.text:

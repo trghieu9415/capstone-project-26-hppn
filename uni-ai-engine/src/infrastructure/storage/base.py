@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional
 from schemas.document import ChildNode, ParentNode
+from schemas.request import DocumentFilter
 
 
 class IDocumentStore(ABC):
@@ -18,8 +19,23 @@ class IVectorStore(ABC):
     async def save_children(self, nodes: List[ChildNode]) -> bool:
         pass
 
+    @abstractmethod
+    async def search_vector(
+        self, query_embedding: List[float], top_k: int = 5,
+        filters: Optional[DocumentFilter] = None
+    ) -> List[ChildNode]:
+        pass
+
 
 class IKeywordStore(ABC):
     @abstractmethod
     async def save_children(self, nodes: List[ChildNode]) -> bool:
+        pass
+
+    # Sửa dòng này
+    @abstractmethod
+    async def search_keyword(
+        self, query: str, top_k: int = 5,
+        filters: Optional[DocumentFilter] = None
+    ) -> List[ChildNode]:
         pass

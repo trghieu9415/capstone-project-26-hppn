@@ -1,10 +1,10 @@
 import asyncio
-from typing import Dict, Any
 
 from core.ingestion.chunker import PDRChunker
 from core.ingestion.loader import DocumentLoader
 from infrastructure.storage.base import IDocumentStore, IKeywordStore, IVectorStore
 from infrastructure.embeddings.base import IEmbeddingService
+from schemas.document import DocumentMetadata
 from utils.logger import app_logger
 
 
@@ -25,7 +25,7 @@ class IngestionPipeline:
         self.chunker = PDRChunker()
 
     async def execute(
-        self, file_bytes: bytes, extension: str, metadata: Dict[str, Any]
+        self, file_bytes: bytes, extension: str, metadata: DocumentMetadata
     ) -> bool:
         try:
             clean_text = await asyncio.to_thread(

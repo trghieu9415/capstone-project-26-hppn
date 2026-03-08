@@ -10,7 +10,7 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy.future import select
 
 from infrastructure.storage.base import IDocumentStore
-from schemas.document import ParentNode
+from schemas.document import ParentNode, DocumentMetadata
 from utils.logger import app_logger
 
 Base = declarative_base()
@@ -20,8 +20,7 @@ class ParentDocumentEntity(Base):
     __tablename__ = "parent_documents"
     id = Column(String(255), primary_key=True)
     full_text = Column(Text, nullable=False)
-
-    info = Column("info", JSONB, default=dict)
+    document_metadata = Column("metadata", JSONB, default=dict)
 
 
 class PostgresAdapter(IDocumentStore):
@@ -41,18 +40,17 @@ class PostgresAdapter(IDocumentStore):
         try:
             async with self.SessionLocal() as session:
                 for node in nodes:
-
                     stmt = insert(ParentDocumentEntity).values(
                         id=str(node.id),
                         full_text=node.full_text,
-                        info=node.info,
+                        document_metadata=node.metadata.model_dump(),
                     )
 
                     update_stmt = stmt.on_conflict_do_update(
                         index_elements=["id"],
                         set_={
                             "full_text": stmt.excluded.full_text,
-                            "info": stmt.excluded.info,
+                            "document_metadata": stmt.excluded.document_metadata,
                         },
                     )
                     await session.execute(update_stmt)
@@ -75,12 +73,13 @@ class PostgresAdapter(IDocumentStore):
                 entities = result.scalars().all()
 
                 for entity in entities:
-
+                    # Lấy dictionary từ Database và map vào Object DocumentMetadata
+                    meta_dict = entity.document_metadata if entity.document_metadata else {}
                     results.append(
                         ParentNode(
                             id=entity.id,
                             full_text=entity.full_text,
-                            meta=entity.info if entity.info else {},
+                            metadata=DocumentMetadata(**meta_dict),
                         )
                     )
             return results

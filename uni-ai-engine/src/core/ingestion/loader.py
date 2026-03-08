@@ -1,9 +1,10 @@
-from utils.parsers import ParserFactory
+from utils.parsers.parser_factory import ParserFactory
 from utils.text_processing import clean_text_pipeline
 
 
 class DocumentLoader:
-    def load_and_clean(self, file_bytes: bytes, extension: str) -> str:
+    @staticmethod
+    def load_and_clean(file_bytes: bytes, extension: str) -> str:
         parser = ParserFactory.get_parser(extension)
         raw_text = parser.extract_text(file_bytes)
 
