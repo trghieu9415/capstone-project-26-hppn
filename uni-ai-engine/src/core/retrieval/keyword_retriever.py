@@ -1,8 +1,8 @@
 from typing import List, Optional
+from uuid import UUID
 
 from infrastructure.storage.base import IKeywordStore
-from schemas.document import ChildNode
-from schemas.request import DocumentFilter
+from schemas.document import ScoredNode
 from utils.logger import app_logger
 
 
@@ -11,16 +11,24 @@ class KeywordRetriever:
         self.keyword_store = keyword_store
 
     async def retrieve(
-        self, query: str, top_k: int = 5, filters: Optional[DocumentFilter] = None
-    ) -> List[ChildNode]:
-        if not query.strip():
-            return []
+        self,
+        query: str,
+        top_k: int = 5,
+        doc_ids: Optional[List[UUID]] = None
+    ) -> List[ScoredNode]:
 
         try:
+            app_logger.info(f"--- Keyword Retrieval (BM25): '{query[:50]}...' ---")
             results = await self.keyword_store.search_keyword(
-                query, top_k=top_k, filters=filters
+                query=query,
+                top_k=top_k,
+                doc_ids=doc_ids
             )
+
+            app_logger.info(
+                f"-> Keyword search hoàn tất. Tìm thấy {len(results)} chunks.")
             return results
+
         except Exception as e:
-            app_logger.error(f"Lỗi trong quá trình Keyword Retrieval: {e}")
+            app_logger.error(f"Lỗi trong KeywordRetriever: {e}")
             return []

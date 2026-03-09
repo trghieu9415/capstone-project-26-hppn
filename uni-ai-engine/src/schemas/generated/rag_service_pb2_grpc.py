@@ -25,8 +25,8 @@ if _version_not_supported:
     )
 
 
-class AiEngineServiceStub(object):
-    """Định nghĩa Service chính
+class RagEngineServiceStub(object):
+    """SERVICE DEFINITION
     """
 
     def __init__(self, channel):
@@ -35,80 +35,107 @@ class AiEngineServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.IngestDocument = channel.unary_unary(
-                '/unirag.grpc.AiEngineService/IngestDocument',
-                request_serializer=rag__service__pb2.IngestRequest.SerializeToString,
-                response_deserializer=rag__service__pb2.IngestResponse.FromString,
+        self.UploadDocument = channel.stream_unary(
+                '/rag.RagEngineService/UploadDocument',
+                request_serializer=rag__service__pb2.UploadRequest.SerializeToString,
+                response_deserializer=rag__service__pb2.UploadResponse.FromString,
                 _registered_method=True)
-        self.AskQuestion = channel.unary_unary(
-                '/unirag.grpc.AiEngineService/AskQuestion',
+        self.DeleteDocument = channel.unary_unary(
+                '/rag.RagEngineService/DeleteDocument',
+                request_serializer=rag__service__pb2.DeleteRequest.SerializeToString,
+                response_deserializer=rag__service__pb2.DeleteResponse.FromString,
+                _registered_method=True)
+        self.QueryRag = channel.unary_stream(
+                '/rag.RagEngineService/QueryRag',
                 request_serializer=rag__service__pb2.QueryRequest.SerializeToString,
                 response_deserializer=rag__service__pb2.QueryResponse.FromString,
                 _registered_method=True)
-        self.AskQuestionStream = channel.unary_stream(
-                '/unirag.grpc.AiEngineService/AskQuestionStream',
-                request_serializer=rag__service__pb2.QueryRequest.SerializeToString,
-                response_deserializer=rag__service__pb2.QueryStreamResponse.FromString,
-                _registered_method=True)
 
 
-class AiEngineServiceServicer(object):
-    """Định nghĩa Service chính
+class RagEngineServiceServicer(object):
+    """SERVICE DEFINITION
     """
 
-    def IngestDocument(self, request, context):
-        """1. Gửi file lên để xử lý (Ingestion)
+    def UploadDocument(self, request_iterator, context):
+        """1. Nạp Doc (Client Streaming)
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def AskQuestion(self, request, context):
-        """2. Trả lời câu hỏi (Query)
+    def DeleteDocument(self, request, context):
+        """2. Xóa Doc (Unary - Gọi 1 lần)
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def AskQuestionStream(self, request, context):
-        """3. Trả lời câu hỏi dạng Stream (Dành cho UI gõ từng chữ)
+    def QueryRag(self, request, context):
+        """3. Truy vấn RAG (Server Streaming)
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
 
-def add_AiEngineServiceServicer_to_server(servicer, server):
+def add_RagEngineServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'IngestDocument': grpc.unary_unary_rpc_method_handler(
-                    servicer.IngestDocument,
-                    request_deserializer=rag__service__pb2.IngestRequest.FromString,
-                    response_serializer=rag__service__pb2.IngestResponse.SerializeToString,
+            'UploadDocument': grpc.stream_unary_rpc_method_handler(
+                    servicer.UploadDocument,
+                    request_deserializer=rag__service__pb2.UploadRequest.FromString,
+                    response_serializer=rag__service__pb2.UploadResponse.SerializeToString,
             ),
-            'AskQuestion': grpc.unary_unary_rpc_method_handler(
-                    servicer.AskQuestion,
+            'DeleteDocument': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteDocument,
+                    request_deserializer=rag__service__pb2.DeleteRequest.FromString,
+                    response_serializer=rag__service__pb2.DeleteResponse.SerializeToString,
+            ),
+            'QueryRag': grpc.unary_stream_rpc_method_handler(
+                    servicer.QueryRag,
                     request_deserializer=rag__service__pb2.QueryRequest.FromString,
                     response_serializer=rag__service__pb2.QueryResponse.SerializeToString,
             ),
-            'AskQuestionStream': grpc.unary_stream_rpc_method_handler(
-                    servicer.AskQuestionStream,
-                    request_deserializer=rag__service__pb2.QueryRequest.FromString,
-                    response_serializer=rag__service__pb2.QueryStreamResponse.SerializeToString,
-            ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'unirag.grpc.AiEngineService', rpc_method_handlers)
+            'rag.RagEngineService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('unirag.grpc.AiEngineService', rpc_method_handlers)
+    server.add_registered_method_handlers('rag.RagEngineService', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
-class AiEngineService(object):
-    """Định nghĩa Service chính
+class RagEngineService(object):
+    """SERVICE DEFINITION
     """
 
     @staticmethod
-    def IngestDocument(request,
+    def UploadDocument(request_iterator,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.stream_unary(
+            request_iterator,
+            target,
+            '/rag.RagEngineService/UploadDocument',
+            rag__service__pb2.UploadRequest.SerializeToString,
+            rag__service__pb2.UploadResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def DeleteDocument(request,
             target,
             options=(),
             channel_credentials=None,
@@ -121,9 +148,9 @@ class AiEngineService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/unirag.grpc.AiEngineService/IngestDocument',
-            rag__service__pb2.IngestRequest.SerializeToString,
-            rag__service__pb2.IngestResponse.FromString,
+            '/rag.RagEngineService/DeleteDocument',
+            rag__service__pb2.DeleteRequest.SerializeToString,
+            rag__service__pb2.DeleteResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -135,34 +162,7 @@ class AiEngineService(object):
             _registered_method=True)
 
     @staticmethod
-    def AskQuestion(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/unirag.grpc.AiEngineService/AskQuestion',
-            rag__service__pb2.QueryRequest.SerializeToString,
-            rag__service__pb2.QueryResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def AskQuestionStream(request,
+    def QueryRag(request,
             target,
             options=(),
             channel_credentials=None,
@@ -175,9 +175,9 @@ class AiEngineService(object):
         return grpc.experimental.unary_stream(
             request,
             target,
-            '/unirag.grpc.AiEngineService/AskQuestionStream',
+            '/rag.RagEngineService/QueryRag',
             rag__service__pb2.QueryRequest.SerializeToString,
-            rag__service__pb2.QueryStreamResponse.FromString,
+            rag__service__pb2.QueryResponse.FromString,
             options,
             channel_credentials,
             insecure,

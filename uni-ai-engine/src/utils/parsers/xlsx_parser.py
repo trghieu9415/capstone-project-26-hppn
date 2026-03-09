@@ -1,6 +1,6 @@
 import io
 import pandas as pd
-from .base import BaseParser
+from base import BaseParser
 from utils.logger import app_logger
 
 

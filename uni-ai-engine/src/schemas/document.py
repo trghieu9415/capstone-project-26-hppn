@@ -3,18 +3,9 @@ from typing import List, Optional, Dict, Any
 from uuid import UUID
 
 
-class DocumentMetadata(BaseModel):
-    document_id: str
-    user_id: str
-    file_name: str
-    folder_id: Optional[str] = None
-    tags: List[str] = Field(default_factory=list)
-    extra_info: Dict[str, Any] = Field(default_factory=dict)
-
-
 class BaseNode(BaseModel):
     id: UUID
-    metadata: DocumentMetadata
+    metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
 class ParentNode(BaseNode):
@@ -23,5 +14,11 @@ class ParentNode(BaseNode):
 
 class ChildNode(BaseNode):
     parent_id: UUID
+    chunk_index: int
     text_chunk: str
     embedding: Optional[List[float]] = None
+
+
+class ScoredNode(BaseModel):
+    node: ChildNode
+    score: float

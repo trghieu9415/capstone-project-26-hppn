@@ -1,128 +1,85 @@
-import sys
-import os
-import asyncio
 import grpc
+import uuid
+from uuid import UUID
+from typing import List
 
-# ==============================================================================
-# BƯỚC QUAN TRỌNG NHẤT: Nạp đường dẫn (Path) để Python tìm thấy các file nội bộ
-# ==============================================================================
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))  # Thư mục presentation/
-SRC_DIR = os.path.dirname(CURRENT_DIR)  # Thư mục src/
-GRPC_PB_DIR = os.path.join(CURRENT_DIR, "grpc_pb")  # Thư mục grpc_pb/
+import schemas.generated.rag_service_pb2 as rag_pb2
+import schemas.generated.rag_service_pb2_grpc as rag_pb2_grpc
 
-# Add 'src' vào hệ thống để gọi được schemas, core, infrastructure...
-if SRC_DIR not in sys.path:
-    sys.path.append(SRC_DIR)
-
-# Add 'grpc_pb' vào hệ thống để fix lỗi import ngầm của file gRPC
-if GRPC_PB_DIR not in sys.path:
-    sys.path.append(GRPC_PB_DIR)
-
-# ==============================================================================
-# BÂY GIỜ MỚI IMPORT CÁC MODULE (Lưu ý: Không dùng 'from presentation.grpc_pb...')
-# ==============================================================================
-import rag_service_pb2
-import rag_service_pb2_grpc
-
-from schemas.document import DocumentMetadata
-from schemas.request import DocumentFilter
-from presentation.dependencies import container
+from core.ingestion.pipeline import IngestionPipeline
+from core.rag_service import RAGService
 from utils.logger import app_logger
 
 
-class AiEngineServiceServicer(rag_service_pb2_grpc.AiEngineServiceServicer):
+class RagEngineServicer(rag_pb2_grpc.RagEngineServiceServicer):
+    def __init__(self, ingestion_pipeline: IngestionPipeline, rag_service: RAGService):
+        self.pipeline = ingestion_pipeline
+        self.rag_service = rag_service
 
-    async def IngestDocument(self, request, context):
-        app_logger.info(
-            f"Nhận request IngestDocument: File {request.metadata.file_name}")
+    async def UploadDocument(self, request_iterator, context):
+        full_bytes = bytearray()
+        doc_id_str = None
 
-        # 1. Parse Metadata từ Protobuf sang Pydantic
-        metadata = DocumentMetadata(
-            document_id=request.metadata.document_id,
-            user_id=request.metadata.user_id,
-            file_name=request.metadata.file_name,
-            folder_id=request.metadata.folder_id if request.metadata.HasField(
-                "folder_id") else None,
-            tags=list(request.metadata.tags)
-        )
+        metadata = dict(context.invocation_metadata())
+        file_name = metadata.get("file_name", "unknown_file")
+        extension = metadata.get("extension", ".pdf")
 
-        # 2. Đưa vào Pipeline
-        success = await container.ingestion_pipeline.execute(
-            file_bytes=request.file_content,
-            extension=request.file_extension,
-            metadata=metadata
-        )
+        try:
+            async for request in request_iterator:
+                if not doc_id_str:
+                    doc_id_str = request.doc_id
+                full_bytes.extend(request.chunk_data)
 
-        return rag_service_pb2.IngestResponse(
-            success=success,
-            message="Xử lý tài liệu thành công" if success else "Có lỗi xảy ra khi xử lý tài liệu"
-        )
+            app_logger.info(
+                f"Đã nhận đủ {len(full_bytes)} bytes cho DocID: {doc_id_str}")
 
-    async def AskQuestion(self, request, context):
-        app_logger.info(
-            f"Nhận request AskQuestion: '{request.query}' từ user {request.filter.user_id}")
+            success = await self.pipeline.run(
+                file_bytes=bytes(full_bytes),
+                file_name=file_name,
+                extension=extension,
+                parent_id=UUID(doc_id_str)
+            )
 
-        # 1. Parse Filter từ Protobuf sang Pydantic
-        doc_filter = DocumentFilter(
-            user_id=request.filter.user_id,
-            document_id=request.filter.document_id if request.filter.HasField(
-                "document_id") else None,
-            folder_id=request.filter.folder_id if request.filter.HasField(
-                "folder_id") else None,
-            tags=list(request.filter.tags) if request.filter.tags else None
-        )
+            if success:
+                return rag_pb2.UploadResponse(
+                    success=True,
+                    message="Nạp tài liệu thành công!")
+            else:
+                return rag_pb2.UploadResponse(
+                    success=False,
+                    message="Lỗi trong quá trình xử lý Pipeline.")
 
-        # 2. Đưa vào Pipeline
-        answer = await container.query_pipeline.execute(
-            query=request.query,
-            top_k=request.top_k if request.top_k > 0 else 5,
-            filters=doc_filter
-        )
+        except Exception as e:
+            app_logger.error(f"Lỗi gRPC Upload: {e}")
+            return rag_pb2.UploadResponse(success=False, message=str(e))
 
-        return rag_service_pb2.QueryResponse(answer=answer)
+    async def DeleteDocument(self, request, context):
+        try:
+            doc_id = UUID(request.doc_id)
+            success = await self.pipeline.delete_document(doc_id)
 
-    async def AskQuestionStream(self, request, context):
-        app_logger.info(f"Nhận request AskQuestionStream: '{request.query}'")
+            if success:
+                return rag_pb2.DeleteResponse(success=True, message="Đã xóa tài liệu.")
+            return rag_pb2.DeleteResponse(success=False,
+                                          message="Không tìm thấy tài liệu hoặc lỗi khi xóa.")
+        except Exception as e:
+            return rag_pb2.DeleteResponse(success=False, message=str(e))
 
-        doc_filter = DocumentFilter(
-            user_id=request.filter.user_id,
-            document_id=request.filter.document_id if request.filter.HasField(
-                "document_id") else None,
-            folder_id=request.filter.folder_id if request.filter.HasField(
-                "folder_id") else None,
-            tags=list(request.filter.tags) if request.filter.tags else None
-        )
+    async def QueryRag(self, request, context):
+        try:
+            doc_ids = [
+                UUID(id_str) for id_str in request.doc_ids
+            ] if request.doc_ids else None
 
-        async for chunk in container.query_pipeline.execute_stream(
-            query=request.query,
-            top_k=request.top_k if request.top_k > 0 else 5,
-            filters=doc_filter
-        ):
-            # Stream trả về từng chunk ký tự cho client
-            yield rag_service_pb2.QueryStreamResponse(chunk=chunk)
+            app_logger.info(f"Nhận truy vấn RAG: {request.question}")
 
+            async for text_chunk in self.rag_service.answer_question_stream(
+                query=request.question,
+                doc_ids=doc_ids
+            ):
+                yield rag_pb2.QueryResponse(answer_chunk=text_chunk)
 
-async def serve():
-    # Khởi tạo Database (Bảng, Collection) trước khi nhận Request
-    await container.initialize_async()
-
-    # Khởi tạo Async Server
-    server = grpc.aio.server()
-    rag_service_pb2_grpc.add_AiEngineServiceServicer_to_server(
-        AiEngineServiceServicer(), server)
-
-    # Lắng nghe tại port 50051 (Port tiêu chuẩn của gRPC)
-    listen_addr = '[::]:50051'
-    server.add_insecure_port(listen_addr)
-    app_logger.info(
-        f"🚀 AI Engine gRPC Server đã sẵn sàng và đang chạy tại {listen_addr}...")
-
-    await server.start()
-    await server.wait_for_termination()
-
-
-if __name__ == '__main__':
-    try:
-        asyncio.run(serve())
-    except KeyboardInterrupt:
-        app_logger.info("Tắt Server.")
+        except Exception as e:
+            app_logger.error(f"Lỗi gRPC Query: {e}")
+            yield rag_pb2.QueryResponse(
+                answer_chunk=f"\n[Lỗi hệ thống Python: {str(e)}]")

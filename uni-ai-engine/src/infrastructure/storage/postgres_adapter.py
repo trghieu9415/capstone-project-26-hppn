@@ -1,88 +1,93 @@
 from typing import List
-from sqlalchemy import Column, String, Text
-from sqlalchemy.ext.asyncio import (
-    create_async_engine,
-    AsyncSession,
-    async_sessionmaker,
-)
-from sqlalchemy.dialects.postgresql import JSONB, insert
+from uuid import UUID
+from sqlalchemy import Column, Text
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
-from sqlalchemy.future import select
+from sqlalchemy import select, delete
+from sqlalchemy.dialects.postgresql import insert
 
 from infrastructure.storage.base import IDocumentStore
-from schemas.document import ParentNode, DocumentMetadata
-from utils.logger import app_logger
+from schemas.document import ParentNode
 
 Base = declarative_base()
 
 
-class ParentDocumentEntity(Base):
+class ParentDocumentModel(Base):
     __tablename__ = "parent_documents"
-    id = Column(String(255), primary_key=True)
+    id = Column(PG_UUID(as_uuid=True), primary_key=True)
     full_text = Column(Text, nullable=False)
-    document_metadata = Column("metadata", JSONB, default=dict)
+    metadata_col = Column("metadata", JSONB, default=dict, nullable=False)
 
 
-class PostgresAdapter(IDocumentStore):
-    def __init__(self, connection_string: str):
-        self.engine = create_async_engine(connection_string, pool_pre_ping=True)
-        self.SessionLocal = async_sessionmaker(
-            bind=self.engine, class_=AsyncSession, expire_on_commit=False
-        )
-
-    async def init_db(self):
-        async with self.engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+class PostgresDocumentStore(IDocumentStore):
+    def __init__(self, session_factory: async_sessionmaker[AsyncSession]):
+        self.session_factory = session_factory
 
     async def save_parents(self, nodes: List[ParentNode]) -> bool:
         if not nodes:
             return True
-        try:
-            async with self.SessionLocal() as session:
-                for node in nodes:
-                    stmt = insert(ParentDocumentEntity).values(
-                        id=str(node.id),
-                        full_text=node.full_text,
-                        document_metadata=node.metadata.model_dump(),
-                    )
 
-                    update_stmt = stmt.on_conflict_do_update(
-                        index_elements=["id"],
-                        set_={
-                            "full_text": stmt.excluded.full_text,
-                            "document_metadata": stmt.excluded.document_metadata,
-                        },
-                    )
-                    await session.execute(update_stmt)
+        async with self.session_factory() as session:
+            try:
+                values = [
+                    {
+                        "id": node.id,
+                        "full_text": node.full_text,
+                        "metadata": node.metadata
+                    }
+                    for node in nodes
+                ]
+
+                stmt = insert(ParentDocumentModel).values(values)
+                stmt = stmt.on_conflict_do_update(
+                    index_elements=['id'],
+                    set_={
+                        "full_text": stmt.excluded.full_text,
+                        "metadata": stmt.excluded.metadata
+                    }
+                )
+
+                await session.execute(stmt)
                 await session.commit()
-            return True
-        except Exception as e:
-            app_logger.error(f"Lỗi khi lưu Parent Nodes: {e}")
-            return False
+                return True
+            except Exception as e:
+                await session.rollback()
+                print(f"Error saving parent documents: {e}")
+                return False
 
-    async def get_parents_by_ids(self, parent_ids: List[str]) -> List[ParentNode]:
+    async def get_parents_by_ids(self, parent_ids: List[UUID]) -> List[ParentNode]:
         if not parent_ids:
             return []
-        results = []
-        try:
-            async with self.SessionLocal() as session:
-                stmt = select(ParentDocumentEntity).where(
-                    ParentDocumentEntity.id.in_(parent_ids)
-                )
-                result = await session.execute(stmt)
-                entities = result.scalars().all()
 
-                for entity in entities:
-                    # Lấy dictionary từ Database và map vào Object DocumentMetadata
-                    meta_dict = entity.document_metadata if entity.document_metadata else {}
-                    results.append(
-                        ParentNode(
-                            id=entity.id,
-                            full_text=entity.full_text,
-                            metadata=DocumentMetadata(**meta_dict),
-                        )
-                    )
-            return results
-        except Exception as e:
-            app_logger.error(f"Lỗi khi truy vấn Parent Nodes: {e}")
-            return []
+        async with self.session_factory() as session:
+            stmt = select(ParentDocumentModel).where(
+                ParentDocumentModel.id.in_(parent_ids)
+            )
+            result = await session.execute(stmt)
+            records = result.scalars().all()
+
+            return [
+                ParentNode(
+                    id=record.id,
+                    full_text=record.full_text,
+                    metadata=record.metadata_col
+                )
+                for record in records
+            ]
+
+    async def delete_parents(self, parent_ids: List[UUID]) -> bool:
+        if not parent_ids:
+            return True
+
+        async with self.session_factory() as session:
+            try:
+                stmt = delete(ParentDocumentModel).where(
+                    ParentDocumentModel.id.in_(parent_ids))
+                await session.execute(stmt)
+                await session.commit()
+                return True
+            except Exception as e:
+                await session.rollback()
+                print(f"Error deleting parent documents: {e}")
+                return False

@@ -2,112 +2,117 @@ import os
 import pickle
 import asyncio
 from typing import List, Optional
+from uuid import UUID
 from rank_bm25 import BM25Okapi
+from pyvi import ViTokenizer  # Import thư viện cắt từ tiếng Việt
 
 from infrastructure.storage.base import IKeywordStore
-from schemas.document import ChildNode
-from schemas.request import DocumentFilter
-from utils.logger import app_logger
+from schemas.document import ChildNode, ScoredNode
 
 
-class BM25Adapter(IKeywordStore):
-    def __init__(self, persist_dir: str = "./data/bm25_index"):
+class BM25KeywordStore(IKeywordStore):
+    def __init__(self, persist_dir: str = "../data/keyword_db"):
         self.persist_dir = persist_dir
-        self.index_file = os.path.join(persist_dir, "bm25_data.pkl")
+        self.index_path = os.path.join(self.persist_dir, "bm25_nodes.pkl")
+
         self.nodes: List[ChildNode] = []
         self.bm25: Optional[BM25Okapi] = None
-
         self._lock = asyncio.Lock()
 
-        os.makedirs(persist_dir, exist_ok=True)
+        os.makedirs(self.persist_dir, exist_ok=True)
         self._load_index_sync()
 
-    @staticmethod
-    def _tokenize(text: str) -> List[str]:
-        if not text:
-            return []
-        return text.lower().split()
+    # INTERNAL METHODS
+    def _tokenize(self, text: str) -> List[str]:
+        tokenized_text = ViTokenizer.tokenize(text)
+        return tokenized_text.lower().split()
 
     def _load_index_sync(self):
-        if os.path.exists(self.index_file):
-            try:
-                with open(self.index_file, "rb") as f:
-                    data = pickle.load(f)
-                    self.nodes = data.get("nodes", [])
-                    corpus = data.get("corpus", [])
-                    if corpus:
-                        self.bm25 = BM25Okapi(corpus)
-                app_logger.info(f"Đã load BM25 index với {len(self.nodes)} nodes.")
-            except Exception as e:
-                app_logger.error(f"Lỗi đọc BM25 Index: {e}")
+        if os.path.exists(self.index_path):
+            with open(self.index_path, "rb") as f:
+                self.nodes = pickle.load(f)
+            self._rebuild_bm25()
 
-    def _save_index_sync(self, corpus: List[List[str]]):
-        try:
-            with open(self.index_file, "wb") as f:
-                pickle.dump({"nodes": self.nodes, "corpus": corpus}, f)
-            app_logger.info("Đã lưu BM25 Index xuống ổ cứng.")
-        except Exception as e:
-            app_logger.error(f"Lỗi lưu BM25 Index: {e}")
+    def _save_index_sync(self):
+        with open(self.index_path, "wb") as f:
+            pickle.dump(self.nodes, f)
 
-    @staticmethod
-    def _build_bm25_sync(corpus: List[List[str]]):
-        return BM25Okapi(corpus)
+    def _rebuild_bm25(self):
+        if self.nodes:
+            corpus = [self._tokenize(node.text_chunk) for node in self.nodes]
+            self.bm25 = BM25Okapi(corpus)
+        else:
+            self.bm25 = None
 
+    # INTERFACE IMPLEMENTATION
     async def save_children(self, nodes: List[ChildNode]) -> bool:
         if not nodes:
             return True
 
         async with self._lock:
             try:
-                self.nodes.extend(nodes)
-                corpus = await asyncio.to_thread(
-                    lambda: [self._tokenize(node.text_chunk) for node in self.nodes]
-                )
-                self.bm25 = await asyncio.to_thread(self._build_bm25_sync, corpus)
-                await asyncio.to_thread(self._save_index_sync, corpus)
+                await asyncio.to_thread(self._save_and_rebuild, nodes, is_append=True)
                 return True
             except Exception as e:
-                app_logger.error(f"Lỗi khi lưu vào BM25: {e}")
+                print(f"BM25 Save Error: {e}")
+                return False
+
+    async def delete_children_by_parent_ids(self, parent_ids: List[UUID]) -> bool:
+        if not parent_ids:
+            return True
+
+        async with self._lock:
+            try:
+                await asyncio.to_thread(self._delete_and_rebuild, parent_ids)
+                return True
+            except Exception as e:
+                print(f"BM25 Delete Error: {e}")
                 return False
 
     async def search_keyword(
-        self, query: str, top_k: int = 5, filters: Optional[DocumentFilter] = None
-    ) -> List[ChildNode]:
+        self,
+        query: str,
+        top_k: int = 5,
+        doc_ids: Optional[List[UUID]] = None,
+    ) -> List[ScoredNode]:
+
         if not self.bm25 or not self.nodes:
             return []
 
-        try:
+        def _search():
             tokenized_query = self._tokenize(query)
-            scores = await asyncio.to_thread(self.bm25.get_scores, tokenized_query)
+            scores = self.bm25.get_scores(tokenized_query)
 
-            filtered_indices = []
-            for idx, node in enumerate(self.nodes):
-                meta = node.metadata
-                if filters:
-                    if meta.user_id != filters.user_id:
-                        continue
-                    if filters.folder_id and meta.folder_id != filters.folder_id:
-                        continue
-                    if filters.document_id and meta.document_id != filters.document_id:
-                        continue
-                    if filters.tags and not any(
-                        tag in meta.tags for tag in filters.tags):
-                        continue
+            scored_nodes = list(zip(self.nodes, scores))
 
-                if scores[idx] > 0:
-                    filtered_indices.append(idx)
+            if doc_ids is not None and len(doc_ids) > 0:
+                scored_nodes = [
+                    (node, score) for node, score in scored_nodes
+                    if node.parent_id in doc_ids
+                ]
 
-            top_n_indices = sorted(
-                filtered_indices, key=lambda i: scores[i], reverse=True
-            )[:top_k]
+            scored_nodes = [x for x in scored_nodes if x[1] > 0]
+            scored_nodes.sort(key=lambda x: x[1], reverse=True)
 
-            results = []
-            for idx in top_n_indices:
-                node = self.nodes[idx].model_copy(deep=True)
-                node.metadata.extra_info["bm25_score"] = float(scores[idx])
-                results.append(node)
+            from schemas.document import ScoredNode
+            return [
+                ScoredNode(node=node, score=score) for node,
+                score in scored_nodes[:top_k]
+            ]
 
-            return results
-        except Exception as e:
-            app_logger.error(f"Lỗi khi tìm kiếm BM25: {e}")
-            return []
+        return await asyncio.to_thread(_search)
+
+    # THREAD WORKERS
+    def _save_and_rebuild(self, new_nodes: List[ChildNode], is_append: bool = True):
+        if is_append:
+            self.nodes.extend(new_nodes)
+        else:
+            self.nodes = new_nodes
+
+        self._save_index_sync()
+        self._rebuild_bm25()
+
+    def _delete_and_rebuild(self, parent_ids: List[UUID]):
+        self.nodes = [node for node in self.nodes if node.parent_id not in parent_ids]
+        self._save_index_sync()
+        self._rebuild_bm25()

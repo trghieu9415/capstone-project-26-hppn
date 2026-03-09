@@ -1,6 +1,6 @@
 import io
 from pptx import Presentation
-from .base import BaseParser
+from base import BaseParser
 from utils.logger import app_logger
 
 

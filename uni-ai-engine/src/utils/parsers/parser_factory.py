@@ -1,7 +1,7 @@
-from .pdf_parser import PdfParser
-from .docx_parser import DocxParser
-from .pptx_parser import PptxParser
-from .xlsx_parser import XlsxParser
+from pdf_parser import PdfParser
+from docx_parser import DocxParser
+from pptx_parser import PptxParser
+from xlsx_parser import XlsxParser
 
 
 class ParserFactory:
@@ -10,11 +10,12 @@ class ParserFactory:
         ext = extension.lower()
         if ext == ".pdf":
             return PdfParser()
-        elif ext in [".docx", ".doc"]:
+        elif ext == ".docx":
             return DocxParser()
-        elif ext in [".pptx", ".ppt"]:
+        elif ext == ".pptx":
             return PptxParser()
-        elif ext in [".xlsx", ".xls", ".csv"]:
+        elif ext == ".xlsx":
             return XlsxParser()
         else:
-            raise ValueError(f"Định dạng {ext} chưa được hỗ trợ!")
+            raise ValueError(
+                f"Định dạng {ext} chưa được hỗ trợ! Chỉ dùng: .pdf, .docx, .pptx, .xlsx")

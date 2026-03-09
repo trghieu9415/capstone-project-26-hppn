@@ -6,10 +6,10 @@ from infrastructure.embeddings.huggingface_adapter import HuggingFaceAdapter
 from infrastructure.llms.gemini_adapter import GeminiAdapter
 from core.retrieval.vector_retriever import VectorRetriever
 from core.retrieval.keyword_retriever import KeywordRetriever
-from core.retrieval.hybrid_searcher import HybridSearcher
+from core.retrieval.hybrid_ranker import HybridSearcher
 from core.generation.generator import RAGGenerator
 from core.ingestion.pipeline import IngestionPipeline
-from core.pipeline import QueryPipeline
+from core.rag_service import QueryPipeline
 from utils.logger import app_logger
 
 

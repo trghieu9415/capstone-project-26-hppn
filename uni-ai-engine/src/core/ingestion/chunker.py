@@ -1,62 +1,55 @@
-import uuid
-from typing import List, Tuple
+from typing import List, Dict, Any
+from uuid import UUID
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from schemas.document import ChildNode, ParentNode, DocumentMetadata
+from schemas.document import ChildNode
+from configs.settings import settings
 from utils.logger import app_logger
 
 
-class PDRChunker:
+class TextChunker:
     def __init__(
         self,
-        parent_chunk_size: int = 2000,
-        parent_chunk_overlap: int = 200,
-        child_chunk_size: int = 400,
-        child_chunk_overlap: int = 50,
+        chunk_size: int = settings.CHUNK_SIZE,
+        chunk_overlap: int = settings.CHUNK_OVERLAP
     ):
-        self.parent_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=parent_chunk_size,
-            chunk_overlap=parent_chunk_overlap,
-            separators=["\n\n", "\n", ".", "!", "?", " ", ""],
+        self.chunk_size = chunk_size
+        self.chunk_overlap = chunk_overlap
+
+        self.splitter = RecursiveCharacterTextSplitter(
+            chunk_size=self.chunk_size,
+            chunk_overlap=self.chunk_overlap,
+            separators=["\n\n", "\n", ".", "?", "!", " ", ""],
+            length_function=len,
+            is_separator_regex=False,
         )
-
-        self.child_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=child_chunk_size,
-            chunk_overlap=child_chunk_overlap,
-            separators=["\n", ".", "!", "?", ",", " ", ""],
-        )
-
-    def chunk_document(
-        self, clean_text: str, source_metadata: DocumentMetadata
-    ) -> Tuple[List[ParentNode], List[ChildNode]]:
-        app_logger.info("Bắt đầu cắt văn bản (Smart Chunking)...")
-        parent_nodes = []
-        child_nodes = []
-
-        parent_texts = self.parent_splitter.split_text(clean_text)
-
-        for p_text in parent_texts:
-            p_id = uuid.uuid4()
-            parent_node = ParentNode(
-                id=p_id,
-                full_text=p_text,
-                metadata=source_metadata.model_copy(deep=True)
-            )
-            parent_nodes.append(parent_node)
-
-            child_texts = self.child_splitter.split_text(p_text)
-
-            for c_text in child_texts:
-                c_id = uuid.uuid4()
-                child_node = ChildNode(
-                    id=c_id,
-                    parent_id=p_id,
-                    text_chunk=c_text,
-                    metadata=source_metadata.model_copy(deep=True),
-                )
-                child_nodes.append(child_node)
-
         app_logger.info(
-            f"Đã tạo {len(parent_nodes)} Parents và {len(child_nodes)} Children."
-        )
-        return parent_nodes, child_nodes
+            f"Đã khởi tạo TextChunker (size={chunk_size}, overlap={chunk_overlap})")
+
+    def split_into_nodes(
+        self,
+        text: str,
+        parent_id: UUID,
+        metadata: Dict[str, Any] = None
+    ) -> List[ChildNode]:
+        if not text or not text.strip():
+            app_logger.warning(
+                f"Text rỗng được gửi tới chunker cho parent_id: {parent_id}")
+            return []
+
+        chunks = self.splitter.split_text(text)
+
+        nodes = []
+        metadata = metadata or {}
+
+        for idx, chunk_text in enumerate(chunks):
+            node = ChildNode(
+                parent_id=parent_id,
+                chunk_index=idx,
+                text_chunk=chunk_text,
+                metadata=metadata.copy()
+            )
+            nodes.append(node)
+
+        app_logger.info(f"Đã cắt parent_id {parent_id} thành {len(nodes)} chunks.")
+        return nodes
