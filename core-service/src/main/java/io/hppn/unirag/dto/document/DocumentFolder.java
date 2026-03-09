@@ -1,4 +1,11 @@
 package io.hppn.unirag.dto.document;
 
-public class DocumentFolder {
+import java.util.Optional;
+import java.util.UUID;
+
+public record DocumentFolder(
+    UUID id,
+    String name,
+    Optional<DocumentFolder> parent
+) {
 }

@@ -1,10 +1,10 @@
 package io.hppn.unirag.dto.tag.request;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public record TagUpsertDTO(
-    UUID id,
-    String name,
-    String colorCode
+    Optional<UUID> id,
+    String name
 ) {
 }

@@ -7,7 +7,6 @@ public record FolderDTO(
     UUID id,
     String name,
     UUID parentId,
-    String path,
     LocalDateTime createdAt
 ) {
 }

@@ -1,12 +1,17 @@
 package io.hppn.unirag.service;
 
 import io.hppn.unirag.dto.tag.TagDTO;
-import io.hppn.unirag.dto.tag.TagRequestDTO;
+import io.hppn.unirag.dto.tag.request.TagUpsertDTO;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface TagService {
-    TagDTO createTag(TagRequestDTO request);
+    TagDTO getById(UUID id);
 
-    List<TagDTO> getAllTags();
+    List<TagDTO> getAll();
+
+    TagDTO upsert(TagUpsertDTO dto);
+
+    void delete(UUID id);
 }

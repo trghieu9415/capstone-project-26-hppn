@@ -1,4 +1,9 @@
 package io.hppn.unirag.dto.document;
 
-public class DocumentTag {
+import java.util.UUID;
+
+public record DocumentTag(
+    UUID id,
+    String name
+) {
 }

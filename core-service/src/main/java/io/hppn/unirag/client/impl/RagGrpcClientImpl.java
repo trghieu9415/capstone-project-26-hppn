@@ -1,4 +1,161 @@
 package io.hppn.unirag.client.impl;
 
-public class RagGrpcClientImpl {
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
+import io.grpc.stub.StreamObserver;
+import io.hppn.unirag.client.RagGrpcClient;
+import io.hppn.unirag.grpc.*;
+import jakarta.annotation.PreDestroy;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
+@Service
+public class RagGrpcClientImpl implements RagGrpcClient {
+
+    private final ManagedChannel channel;
+    private final RagEngineServiceGrpc.RagEngineServiceBlockingStub blockingStub;
+    private final RagEngineServiceGrpc.RagEngineServiceStub asyncStub;
+
+    private static final int CHUNK_SIZE = 64 * 1024;
+
+    public RagGrpcClientImpl(
+        @Value("${rag.grpc.host:localhost}") String host,
+        @Value("${rag.grpc.port:50051}") int port) {
+
+        this.channel = ManagedChannelBuilder.forAddress(host, port)
+            .usePlaintext()
+            .build();
+
+        this.blockingStub = RagEngineServiceGrpc.newBlockingStub(channel);
+        this.asyncStub = RagEngineServiceGrpc.newStub(channel);
+    }
+
+    @Override
+    public void uploadDocument(UUID docId, byte[] fileBytes) {
+        CountDownLatch finishLatch = new CountDownLatch(1);
+        AtomicReference<Throwable> errorRef = new AtomicReference<>();
+
+        StreamObserver<UploadResponse> responseObserver = new StreamObserver<>() {
+            @Override
+            public void onNext(UploadResponse response) {
+                if (!response.getSuccess()) {
+                    errorRef.set(new RuntimeException("Python Engine failed: " + response.getMessage()));
+                }
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                errorRef.set(t);
+                finishLatch.countDown();
+            }
+
+            @Override
+            public void onCompleted() {
+                finishLatch.countDown();
+            }
+        };
+
+        StreamObserver<UploadRequest> requestObserver = asyncStub.uploadDocument(responseObserver);
+
+        try {
+            String docIdStr = docId.toString();
+            int offset = 0;
+
+            while (offset < fileBytes.length) {
+                int length = Math.min(CHUNK_SIZE, fileBytes.length - offset);
+                byte[] chunk = Arrays.copyOfRange(fileBytes, offset, offset + length);
+
+                UploadRequest request = UploadRequest.newBuilder()
+                    .setDocId(docIdStr)
+                    .setChunkData(com.google.protobuf.ByteString.copyFrom(chunk))
+                    .build();
+
+                requestObserver.onNext(request);
+                offset += length;
+            }
+
+            requestObserver.onCompleted();
+
+            boolean completed = finishLatch.await(1, TimeUnit.MINUTES); // Timeout 1 phút
+            if (!completed) {
+                throw new RuntimeException("Timeout waiting for AI Engine to upload document");
+            }
+            if (errorRef.get() != null) {
+                throw new RuntimeException("Error during gRPC upload", errorRef.get());
+            }
+
+        } catch (Exception e) {
+            requestObserver.onError(e);
+            throw new RuntimeException("Failed to stream document to AI Engine", e);
+        }
+    }
+
+    @Override
+    public void deleteDocument(UUID docId) {
+        try {
+            DeleteRequest request = DeleteRequest.newBuilder()
+                .setDocId(docId.toString())
+                .build();
+
+            DeleteResponse response = blockingStub.deleteDocument(request);
+            if (!response.getSuccess()) {
+                throw new RuntimeException("AI Engine failed to delete doc: " + response.getMessage());
+            }
+        } catch (StatusRuntimeException e) {
+            throw new RuntimeException("gRPC call failed: " + e.getStatus(), e);
+        }
+    }
+
+    @Override
+    public String queryRagSync(String question, List<UUID> docIds) {
+        QueryRequest.Builder requestBuilder = QueryRequest.newBuilder()
+            .setQuestion(question);
+
+        if (docIds != null && !docIds.isEmpty()) {
+            List<String> stringIds = docIds.stream().map(UUID::toString).collect(Collectors.toList());
+            requestBuilder.addAllDocIds(stringIds);
+        }
+
+        StringBuilder fullAnswer = new StringBuilder();
+        try {
+            Iterator<QueryResponse> responseIterator = blockingStub.queryRag(requestBuilder.build());
+
+            while (responseIterator.hasNext()) {
+                QueryResponse response = responseIterator.next();
+                fullAnswer.append(response.getAnswerChunk());
+            }
+            return fullAnswer.toString();
+        } catch (StatusRuntimeException e) {
+            throw new RuntimeException("RAG Query failed: " + e.getStatus(), e);
+        }
+    }
+
+    @Override
+    public void queryRagStream(String question, List<UUID> docIds, Consumer<String> onNextChunk) {
+        QueryRequest.Builder requestBuilder = QueryRequest.newBuilder().setQuestion(question);
+        if (docIds != null && !docIds.isEmpty()) {
+            requestBuilder.addAllDocIds(docIds.stream().map(UUID::toString).collect(Collectors.toList()));
+        }
+
+        Iterator<QueryResponse> responseIterator = blockingStub.queryRag(requestBuilder.build());
+        while (responseIterator.hasNext()) {
+            onNextChunk.accept(responseIterator.next().getAnswerChunk());
+        }
+    }
+
+    @PreDestroy
+    public void shutdown() throws InterruptedException {
+        channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
 }

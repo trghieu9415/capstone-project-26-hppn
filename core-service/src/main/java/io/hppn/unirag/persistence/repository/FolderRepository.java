@@ -9,9 +9,7 @@ import java.util.UUID;
 
 @Repository
 public interface FolderRepository extends JpaRepository<FolderEntity, UUID> {
-    List<FolderEntity> findByParentIdIsNull();
-
     List<FolderEntity> findByParentId(UUID parentId);
 
-    List<FolderEntity> findByPathStartingWith(String pathPrefix);
+    List<FolderEntity> findByParentIsNull();
 }
