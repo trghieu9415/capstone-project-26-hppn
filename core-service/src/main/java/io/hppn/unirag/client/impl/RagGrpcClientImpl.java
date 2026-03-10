@@ -42,7 +42,7 @@ public class RagGrpcClientImpl implements RagGrpcClient {
     }
 
     @Override
-    public void uploadDocument(UUID docId, byte[] fileBytes) {
+    public void uploadDocument(UUID docId, String fileName, String extension, byte[] fileBytes) {
         CountDownLatch finishLatch = new CountDownLatch(1);
         AtomicReference<Throwable> errorRef = new AtomicReference<>();
 
@@ -78,6 +78,8 @@ public class RagGrpcClientImpl implements RagGrpcClient {
                 UploadRequest request = UploadRequest.newBuilder()
                     .setDocId(docIdStr)
                     .setChunkData(com.google.protobuf.ByteString.copyFrom(fileBytes, offset, length))
+                    .setFileName(fileName)
+                    .setExtension(extension)
                     .build();
 
                 requestObserver.onNext(request);

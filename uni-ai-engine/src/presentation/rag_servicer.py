@@ -15,26 +15,27 @@ class RagEngineServicer(rag_pb2_grpc.RagEngineServiceServicer):
 
     async def UploadDocument(self, request_iterator, context):
         full_bytes = bytearray()
-        doc_id_str = None
-
-        metadata = dict(context.invocation_metadata())
-        file_name = metadata.get("file_name", "unknown_file")
-        extension = metadata.get("extension", ".pdf")
+        doc_id = None
+        file_name = "unknown"
+        extension = ".pdf"
 
         try:
             async for request in request_iterator:
-                if not doc_id_str:
-                    doc_id_str = request.doc_id
+                if doc_id is None:
+                    doc_id = request.doc_id
+                    file_name = request.file_name
+                    extension = request.extension
+
                 full_bytes.extend(request.chunk_data)
 
             app_logger.info(
-                f"Đã nhận đủ {len(full_bytes)} bytes cho DocID: {doc_id_str}")
+                f"Đã nhận đủ {len(full_bytes)} bytes cho DocID: {doc_id}")
 
             success = await self.pipeline.run(
                 file_bytes=bytes(full_bytes),
                 file_name=file_name,
                 extension=extension,
-                parent_id=UUID(doc_id_str)
+                parent_id=UUID(doc_id)
             )
 
             if success:

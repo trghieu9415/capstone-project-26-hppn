@@ -44,6 +44,8 @@ async def serve():
         url=settings.QDRANT_URL
     )
 
+    await vector_store.initialize()
+
     keyword_store = BM25KeywordStore(persist_dir=settings.KEYWORD_DB_DIR)
 
     embedding_service = HuggingFaceAdapter(model_name=settings.EMBEDDING_MODEL_NAME)

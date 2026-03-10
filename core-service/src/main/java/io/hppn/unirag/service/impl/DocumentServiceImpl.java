@@ -2,16 +2,19 @@ package io.hppn.unirag.service.impl;
 
 import io.hppn.unirag.client.RagGrpcClient;
 import io.hppn.unirag.dto.document.DocumentDTO;
-import io.hppn.unirag.dto.document.request.DocumentUpsertDTO;
+import io.hppn.unirag.dto.document.request.DocumentUpdateDTO;
 import io.hppn.unirag.mapper.DocumentMapper;
 import io.hppn.unirag.persistence.entity.DocumentEntity;
 import io.hppn.unirag.persistence.repository.DocumentRepository;
+import io.hppn.unirag.persistence.repository.FolderRepository;
+import io.hppn.unirag.persistence.repository.TagRepository;
 import io.hppn.unirag.service.DocumentService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.UUID;
 
 @Service
@@ -19,6 +22,8 @@ import java.util.UUID;
 public class DocumentServiceImpl implements DocumentService {
 
     private final DocumentRepository documentRepository;
+    private final FolderRepository folderRepository;
+    private final TagRepository tagRepository;
     private final DocumentMapper documentMapper;
     private final RagGrpcClient ragGrpcClient;
 
@@ -31,30 +36,39 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     @Transactional
-    public DocumentDTO upsert(DocumentUpsertDTO dto, byte[] fileBytes) {
-        DocumentEntity entity;
-        boolean isCreate = dto.id().isEmpty();
+    public DocumentDTO create(UUID folderId, String fileName, String extension, byte[] fileBytes) {
+        if (folderId == null) {
+            throw new IllegalArgumentException("Folder ID không được để trống!");
+        }
+        var entity = new DocumentEntity();
 
-        if (!isCreate) {
-            entity = documentRepository.findById(dto.id().get())
-                .orElseThrow(() -> new EntityNotFoundException("Document not found"));
-            documentMapper.updateEntity(entity, dto);
-            entity = documentRepository.save(entity);
-        } else {
-            entity = documentMapper.toEntity(dto);
-            entity = documentRepository.save(entity);
+        var folder = folderRepository.getReferenceById(folderId);
+        entity.setName(fileName);
+        entity.setExtension(extension);
+        entity.setFolder(folder);
 
-            if (fileBytes != null && fileBytes.length > 0) {
-                try {
-                    ragGrpcClient.uploadDocument(entity.getId(), fileBytes);
-                    System.out.println("Calling Python gRPC to upload doc: " + entity.getId());
-                } catch (Exception e) {
-                    throw new RuntimeException("Failed to upload document to AI Engine", e);
-                }
+        entity = documentRepository.save(entity);
+
+        if (fileBytes != null && fileBytes.length > 0) {
+            try {
+                ragGrpcClient.uploadDocument(
+                    entity.getId(),
+                    entity.getName(),
+                    entity.getExtension(),
+                    fileBytes
+                );
+                System.out.println("Calling Python gRPC to upload doc: " + entity.getId());
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to upload document to AI Engine", e);
             }
         }
 
         return documentMapper.toDto(entity);
+    }
+
+    @Override
+    public DocumentDTO update(UUID id, DocumentUpdateDTO dto) {
+        return null;
     }
 
     @Override

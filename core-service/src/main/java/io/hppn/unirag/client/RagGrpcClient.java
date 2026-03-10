@@ -5,7 +5,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 public interface RagGrpcClient {
-    void uploadDocument(UUID docId, byte[] fileBytes);
+    void uploadDocument(UUID docId, String fileName, String extension, byte[] fileBytes);
 
     void deleteDocument(UUID docId);
 

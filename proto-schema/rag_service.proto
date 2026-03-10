@@ -22,8 +22,10 @@ service RagEngineService {
 
 // --- Upload ---
 message UploadRequest {
-  string doc_id = 1; 
-  bytes chunk_data = 2; 
+  string doc_id = 1;
+  string extension = 2;
+  string file_name = 3;
+  bytes chunk_data = 4;
 }
 
 message UploadResponse {

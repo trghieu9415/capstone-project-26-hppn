@@ -3,7 +3,7 @@ package io.hppn.unirag.mapper;
 import io.hppn.unirag.dto.document.DocumentDTO;
 import io.hppn.unirag.dto.document.DocumentFolder;
 import io.hppn.unirag.dto.document.DocumentTag;
-import io.hppn.unirag.dto.document.request.DocumentUpsertDTO;
+import io.hppn.unirag.dto.document.request.DocumentUpdateDTO;
 import io.hppn.unirag.persistence.entity.DocumentEntity;
 import io.hppn.unirag.persistence.entity.FolderEntity;
 import io.hppn.unirag.persistence.entity.TagEntity;
@@ -26,17 +26,16 @@ public interface DocumentMapper {
         return Optional.ofNullable(parent).map(this::toDocumentFolderDto);
     }
 
-    @Mapping(target = "id", expression = "java(unwrapOptional(dto.id()))")
     @Mapping(target = "folder", source = "folder")
     @Mapping(target = "tags", source = "tags")
     @Mapping(target = "createdAt", ignore = true)
-    DocumentEntity toEntity(DocumentUpsertDTO dto);
+    DocumentEntity toEntity(DocumentUpdateDTO dto);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "folder", source = "folder")
     @Mapping(target = "tags", source = "tags")
-    void updateEntity(@MappingTarget DocumentEntity entity, DocumentUpsertDTO dto);
+    void updateEntity(@MappingTarget DocumentEntity entity, DocumentUpdateDTO dto);
 
     default UUID unwrapOptional(Optional<UUID> optionalId) {
         return optionalId != null ? optionalId.orElse(null) : null;

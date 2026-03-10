@@ -6,12 +6,16 @@ from typing import ClassVar as _ClassVar, Iterable as _Iterable, Optional as _Op
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class UploadRequest(_message.Message):
-    __slots__ = ("doc_id", "chunk_data")
+    __slots__ = ("doc_id", "extension", "file_name", "chunk_data")
     DOC_ID_FIELD_NUMBER: _ClassVar[int]
+    EXTENSION_FIELD_NUMBER: _ClassVar[int]
+    FILE_NAME_FIELD_NUMBER: _ClassVar[int]
     CHUNK_DATA_FIELD_NUMBER: _ClassVar[int]
     doc_id: str
+    extension: str
+    file_name: str
     chunk_data: bytes
-    def __init__(self, doc_id: _Optional[str] = ..., chunk_data: _Optional[bytes] = ...) -> None: ...
+    def __init__(self, doc_id: _Optional[str] = ..., extension: _Optional[str] = ..., file_name: _Optional[str] = ..., chunk_data: _Optional[bytes] = ...) -> None: ...
 
 class UploadResponse(_message.Message):
     __slots__ = ("success", "message")

@@ -1,7 +1,7 @@
 package io.hppn.unirag.controller;
 
 import io.hppn.unirag.dto.document.DocumentDTO;
-import io.hppn.unirag.dto.document.request.DocumentUpsertDTO;
+import io.hppn.unirag.dto.document.request.DocumentUpdateDTO;
 import io.hppn.unirag.service.DocumentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -29,18 +28,24 @@ public class DocumentController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<DocumentDTO> createDocument(
         @RequestParam("file") MultipartFile file,
-        @ModelAttribute DocumentUpsertDTO request) {
+        @RequestParam("folder") UUID folderId) {
         try {
-            DocumentUpsertDTO createDto = new DocumentUpsertDTO(
-                Optional.empty(),
-                request.folder(),
-                request.tags(),
-                request.name(),
-                request.extension()
-            );
+            var originalFileName = file.getOriginalFilename();
+
+            var fileName = "";
+            var extension = "";
+
+            if (originalFileName != null && originalFileName.contains(".")) {
+                int lastDotIndex = originalFileName.lastIndexOf(".");
+                fileName = originalFileName.substring(0, lastDotIndex);
+                extension = originalFileName.substring(lastDotIndex);
+            } else {
+                fileName = originalFileName != null ? originalFileName : "unknown_file";
+                extension = ".bin";
+            }
 
             byte[] fileBytes = file.getBytes();
-            DocumentDTO created = documentService.upsert(createDto, fileBytes);
+            DocumentDTO created = documentService.create(folderId, fileName, extension, fileBytes);
             return ResponseEntity.status(HttpStatus.CREATED).body(created);
         } catch (IOException e) {
             throw new RuntimeException("Lỗi khi đọc file upload: " + e.getMessage());
@@ -50,17 +55,16 @@ public class DocumentController {
     @PutMapping("/{id}")
     public ResponseEntity<DocumentDTO> updateDocumentMetadata(
         @PathVariable UUID id,
-        @RequestBody DocumentUpsertDTO request) {
+        @RequestBody DocumentUpdateDTO request) {
 
-        DocumentUpsertDTO updateDto = new DocumentUpsertDTO(
-            Optional.of(id),
+        DocumentUpdateDTO updateDto = new DocumentUpdateDTO(
             request.folder(),
             request.tags(),
             request.name(),
             request.extension()
         );
 
-        DocumentDTO updated = documentService.upsert(updateDto, null);
+        DocumentDTO updated = documentService.update(id, updateDto);
         return ResponseEntity.ok(updated);
     }
 

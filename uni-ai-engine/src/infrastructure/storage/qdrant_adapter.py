@@ -22,7 +22,29 @@ class QdrantAdapter(IVectorStore):
         self.vector_size = vector_size
         self.client = AsyncQdrantClient(url=url, api_key=api_key)
 
-        asyncio.create_task(self._ensure_collection_exists())
+    async def initialize(self):
+        try:
+            collections_response = await self.client.get_collections()
+            collection_names = [c.name for c in collections_response.collections]
+
+            if self.collection_name not in collection_names:
+                app_logger.info(f"Đang tạo Qdrant collection: {self.collection_name}")
+                await self.client.create_collection(
+                    collection_name=self.collection_name,
+                    vectors_config=models.VectorParams(
+                        size=self.vector_size,
+                        distance=models.Distance.COSINE
+                    )
+                )
+
+                await self.client.create_payload_index(
+                    collection_name=self.collection_name,
+                    field_name="parent_id",
+                    field_schema=models.PayloadSchemaType.KEYWORD,
+                )
+        except Exception as e:
+            app_logger.error(f"Lỗi khi khởi tạo Qdrant: {e}")
+            raise e
 
     async def _ensure_collection_exists(self):
         try:

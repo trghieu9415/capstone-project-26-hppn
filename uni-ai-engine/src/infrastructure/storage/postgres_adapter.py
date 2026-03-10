@@ -3,21 +3,24 @@ from uuid import UUID
 from sqlalchemy import Column, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import select, delete
 from sqlalchemy.dialects.postgresql import insert
 
 from infrastructure.storage.base import IDocumentStore
 from schemas.document import ParentNode
+from utils.logger import app_logger
 
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    pass
 
 
 class ParentDocumentModel(Base):
     __tablename__ = "parent_documents"
     id = Column(PG_UUID(as_uuid=True), primary_key=True)
     full_text = Column(Text, nullable=False)
-    metadata_col = Column("metadata", JSONB, default=dict, nullable=False)
+    extra_data = Column("extra_data", JSONB, default=dict, nullable=False)
 
 
 class PostgresDocumentStore(IDocumentStore):
@@ -34,7 +37,7 @@ class PostgresDocumentStore(IDocumentStore):
                     {
                         "id": node.id,
                         "full_text": node.full_text,
-                        "metadata": node.metadata
+                        "extra_data": node.metadata
                     }
                     for node in nodes
                 ]
@@ -44,7 +47,7 @@ class PostgresDocumentStore(IDocumentStore):
                     index_elements=['id'],
                     set_={
                         "full_text": stmt.excluded.full_text,
-                        "metadata": stmt.excluded.metadata
+                        "extra_data": stmt.excluded.extra_data
                     }
                 )
 
@@ -53,8 +56,8 @@ class PostgresDocumentStore(IDocumentStore):
                 return True
             except Exception as e:
                 await session.rollback()
-                print(f"Error saving parent documents: {e}")
-                return False
+                app_logger.error(f"Error saving parent documents: {e}")
+                raise e
 
     async def get_parents_by_ids(self, parent_ids: List[UUID]) -> List[ParentNode]:
         if not parent_ids:
@@ -71,7 +74,7 @@ class PostgresDocumentStore(IDocumentStore):
                 ParentNode(
                     id=record.id,
                     full_text=record.full_text,
-                    metadata=record.metadata_col
+                    metadata=record.extra_data
                 )
                 for record in records
             ]
