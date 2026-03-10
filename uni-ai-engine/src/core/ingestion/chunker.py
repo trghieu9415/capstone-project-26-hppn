@@ -1,3 +1,4 @@
+import uuid
 from typing import List, Dict, Any
 from uuid import UUID
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -44,6 +45,7 @@ class TextChunker:
 
         for idx, chunk_text in enumerate(chunks):
             node = ChildNode(
+                id=uuid.uuid4(),
                 parent_id=parent_id,
                 chunk_index=idx,
                 text_chunk=chunk_text,

@@ -28,9 +28,8 @@ public class DocumentController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<DocumentDTO> createDocument(
-        @RequestPart("file") MultipartFile file,
-        @RequestPart("metadata") DocumentUpsertDTO request) {
-
+        @RequestParam("file") MultipartFile file,
+        @ModelAttribute DocumentUpsertDTO request) {
         try {
             DocumentUpsertDTO createDto = new DocumentUpsertDTO(
                 Optional.empty(),

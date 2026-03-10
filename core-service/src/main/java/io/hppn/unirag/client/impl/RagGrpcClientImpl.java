@@ -50,7 +50,7 @@ public class RagGrpcClientImpl implements RagGrpcClient {
             @Override
             public void onNext(UploadResponse response) {
                 if (!response.getSuccess()) {
-                    errorRef.set(new RuntimeException("Python Engine failed: " + response.getMessage()));
+                    errorRef.set(new RuntimeException("Python Engine error: " + response.getMessage()));
                 }
             }
 
@@ -74,11 +74,10 @@ public class RagGrpcClientImpl implements RagGrpcClient {
 
             while (offset < fileBytes.length) {
                 int length = Math.min(CHUNK_SIZE, fileBytes.length - offset);
-                byte[] chunk = Arrays.copyOfRange(fileBytes, offset, offset + length);
 
                 UploadRequest request = UploadRequest.newBuilder()
                     .setDocId(docIdStr)
-                    .setChunkData(com.google.protobuf.ByteString.copyFrom(chunk))
+                    .setChunkData(com.google.protobuf.ByteString.copyFrom(fileBytes, offset, length))
                     .build();
 
                 requestObserver.onNext(request);
@@ -86,18 +85,20 @@ public class RagGrpcClientImpl implements RagGrpcClient {
             }
 
             requestObserver.onCompleted();
-
-            boolean completed = finishLatch.await(1, TimeUnit.MINUTES); // Timeout 1 phút
-            if (!completed) {
-                throw new RuntimeException("Timeout waiting for AI Engine to upload document");
+            if (!finishLatch.await(1, TimeUnit.MINUTES)) {
+                throw new RuntimeException("Timeout waiting for AI Engine");
             }
+
             if (errorRef.get() != null) {
-                throw new RuntimeException("Error during gRPC upload", errorRef.get());
+                throw new RuntimeException("Error during gRPC processing", errorRef.get());
             }
 
         } catch (Exception e) {
-            requestObserver.onError(e);
-            throw new RuntimeException("Failed to stream document to AI Engine", e);
+            try {
+                requestObserver.onError(e);
+            } catch (Exception ignored) {
+            }
+            throw new RuntimeException("Failed to stream document", e);
         }
     }
 

@@ -29,6 +29,19 @@
   <properties>
     <java.version>17</java.version>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-bom</artifactId>
+        <version>1.62.2</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <dependency>
       <groupId>org.mapstruct</groupId>
@@ -61,24 +74,29 @@
 
     <!-- gRPC & Protobuf Dependencies -->
     <dependency>
-      <groupId>net.devh</groupId>
-      <artifactId>grpc-client-spring-boot-starter</artifactId>
-      <version>3.1.0.RELEASE</version>
-    </dependency>
-    <dependency>
       <groupId>io.grpc</groupId>
-      <artifactId>grpc-stub</artifactId>
-      <version>1.62.2</version>
+      <artifactId>grpc-netty-shaded</artifactId>
     </dependency>
     <dependency>
       <groupId>io.grpc</groupId>
       <artifactId>grpc-protobuf</artifactId>
-      <version>1.62.2</version>
     </dependency>
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-stub</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>javax.annotation</groupId>
       <artifactId>javax.annotation-api</artifactId>
       <version>1.3.2</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <version>3.0.2</version>
+      <scope>compile</scope>
     </dependency>
   </dependencies>
   <build>

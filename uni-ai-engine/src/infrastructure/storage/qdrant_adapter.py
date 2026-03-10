@@ -30,7 +30,6 @@ class QdrantAdapter(IVectorStore):
             collection_names = [c.name for c in collections_response.collections]
 
             if self.collection_name not in collection_names:
-                app_logger.info(f"Đang tạo Qdrant collection: {self.collection_name}")
                 await self.client.create_collection(
                     collection_name=self.collection_name,
                     vectors_config=models.VectorParams(
@@ -44,6 +43,7 @@ class QdrantAdapter(IVectorStore):
                     field_name="parent_id",
                     field_schema=models.PayloadSchemaType.KEYWORD,
                 )
+                app_logger.info(f"Đã tạo Qdrant collection: {self.collection_name}")
         except Exception as e:
             app_logger.error(f"Lỗi khi khởi tạo Qdrant collection: {e}")
 

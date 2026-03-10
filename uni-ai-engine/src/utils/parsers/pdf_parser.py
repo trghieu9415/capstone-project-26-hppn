@@ -1,5 +1,5 @@
 import fitz
-from base import BaseParser
+from utils.parsers.base import BaseParser
 from utils.logger import app_logger
 
 

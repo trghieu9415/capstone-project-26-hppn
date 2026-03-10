@@ -1,10 +1,7 @@
-import grpc
-import uuid
 from uuid import UUID
-from typing import List
 
-import schemas.generated.rag_service_pb2 as rag_pb2
-import schemas.generated.rag_service_pb2_grpc as rag_pb2_grpc
+import rag_service_pb2 as rag_pb2
+import rag_service_pb2_grpc as rag_pb2_grpc
 
 from core.ingestion.pipeline import IngestionPipeline
 from core.rag_service import RAGService
@@ -60,8 +57,9 @@ class RagEngineServicer(rag_pb2_grpc.RagEngineServiceServicer):
 
             if success:
                 return rag_pb2.DeleteResponse(success=True, message="Đã xóa tài liệu.")
-            return rag_pb2.DeleteResponse(success=False,
-                                          message="Không tìm thấy tài liệu hoặc lỗi khi xóa.")
+            return rag_pb2.DeleteResponse(
+                success=False,
+                message="Không tìm thấy tài liệu hoặc lỗi khi xóa.")
         except Exception as e:
             return rag_pb2.DeleteResponse(success=False, message=str(e))
 

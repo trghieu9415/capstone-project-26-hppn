@@ -1,66 +1,52 @@
 syntax = "proto3";
 
-package unirag.grpc;
+package rag;
 
-// Cấu hình sinh code cho Java
 option java_multiple_files = true;
-option java_package = "io.hppn.unirag.grpc";
+option java_package = "io.hppn.unirag.grpc"; 
 option java_outer_classname = "RagServiceProto";
 
-// Định nghĩa Service chính
-service AiEngineService {
-    // 1. Gửi file lên để xử lý (Ingestion)
-    rpc IngestDocument (IngestRequest) returns (IngestResponse);
-    
-    // 2. Trả lời câu hỏi (Query)
-    rpc AskQuestion (QueryRequest) returns (QueryResponse);
-    
-    // 3. Trả lời câu hỏi dạng Stream (Dành cho UI gõ từng chữ)
-    rpc AskQuestionStream (QueryRequest) returns (stream QueryStreamResponse);
+// SERVICE DEFINITION
+service RagEngineService {
+  // 1. Nạp Doc (Client Streaming)
+  rpc UploadDocument(stream UploadRequest) returns (UploadResponse);
+
+  // 2. Xóa Doc (Unary - Gọi 1 lần)
+  rpc DeleteDocument(DeleteRequest) returns (DeleteResponse);
+
+  // 3. Truy vấn RAG (Server Streaming)
+  rpc QueryRag(QueryRequest) returns (stream QueryResponse);
 }
 
-// ============================================
-// CẤU TRÚC DỮ LIỆU CHUNG
-// ============================================
+// MESSAGES
 
-message DocumentMetadata {
-    string document_id = 1;
-    string user_id = 2;
-    string file_name = 3;
-    optional string folder_id = 4;
-    repeated string tags = 5;
+// --- Upload ---
+message UploadRequest {
+  string doc_id = 1; 
+  bytes chunk_data = 2; 
 }
 
-message DocumentFilter {
-    string user_id = 1;
-    optional string document_id = 2;
-    optional string folder_id = 3;
-    repeated string tags = 4;
+message UploadResponse {
+  bool success = 1;
+  string message = 2;
 }
 
-// MESSAGES CHO INGESTION
-message IngestRequest {
-    bytes file_content = 1; 
-    string file_extension = 2;
-    DocumentMetadata metadata = 3;
+// --- Delete ---
+message DeleteRequest {
+  string doc_id = 1;
 }
 
-message IngestResponse {
-    bool success = 1;
-    string message = 2;
+message DeleteResponse {
+  bool success = 1;
+  string message = 2;
 }
 
-// MESSAGES CHO QUERY (TÌM KIẾM)
+// --- Query ---
 message QueryRequest {
-    string query = 1; 
-    int32 top_k = 2;
-    DocumentFilter filter = 3;
+  string question = 1;
+  repeated string doc_ids = 2; // Danh sách DocID. Rỗng = tìm toàn bộ
 }
 
 message QueryResponse {
-    string answer = 1;
-}
-
-message QueryStreamResponse {
-    string chunk = 1;
+  string answer_chunk = 1; // Từng đoạn text trả về
 }

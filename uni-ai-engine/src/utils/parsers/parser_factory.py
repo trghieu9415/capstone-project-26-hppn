@@ -1,7 +1,7 @@
-from pdf_parser import PdfParser
-from docx_parser import DocxParser
-from pptx_parser import PptxParser
-from xlsx_parser import XlsxParser
+from utils.parsers.docx_parser import DocxParser
+from utils.parsers.pdf_parser import PdfParser
+from utils.parsers.pptx_parser import PptxParser
+from utils.parsers.xlsx_parser import XlsxParser
 
 
 class ParserFactory:

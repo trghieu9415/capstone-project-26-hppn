@@ -38,6 +38,9 @@ class Settings(BaseSettings):
         default=768,
         description="Kích thước vector của model (sbert là 768)")
 
+    GEMINI_API_KEY: str = Field(default="")
+    GEMINI_MODEL_NAME: str = Field(default="gemini-2.5-flash")
+
     CHUNK_SIZE: int = Field(default=500, description="Số lượng từ tối đa trong 1 chunk")
     CHUNK_OVERLAP: int = Field(
         default=50,
