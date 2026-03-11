@@ -4,7 +4,7 @@ from typing import List
 
 class IEmbeddingService(ABC):
     @abstractmethod
-    async def embed_text(self, text: str) -> List[float]:
+    async def embed_text(self, text: str, is_query: bool = False) -> List[float]:
         pass
 
     @abstractmethod

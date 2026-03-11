@@ -3,7 +3,7 @@ import grpc
 
 from configs.settings import settings
 from presentation.dependencies import init_dependencies
-from presentation.rag_servicer import RagEngineServicer
+from presentation.grpc_servicer import GrpcRagServicer
 from utils.logger import app_logger
 
 import rag_service_pb2_grpc as rag_pb2_grpc
@@ -20,7 +20,7 @@ async def serve():
 
     # 3. Gắn Servicer (đã được inject dependencies) vào Server
     rag_pb2_grpc.add_RagEngineServiceServicer_to_server(
-        RagEngineServicer(ingestion_pipeline, rag_service),
+        GrpcRagServicer(ingestion_pipeline, rag_service),
         server
     )
 

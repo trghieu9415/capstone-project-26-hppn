@@ -27,36 +27,55 @@ class IngestionPipeline:
         self.loader = DocumentLoader()
         self.chunker = TextChunker()
 
+    @staticmethod
+    def _split_text_by_words(text: str, word_limit: int = 1200) -> List[str]:
+        words = text.split()
+        return [" ".join(words[i: i + word_limit]) for i in
+                range(0, len(words), word_limit)]
+
     async def run(
         self,
         file_bytes: bytes,
         file_name: str,
         extension: str,
-        parent_id: UUID,
+        doc_id: UUID,
         metadata: Dict[str, Any] = None
     ) -> bool:
         metadata = metadata or {}
         metadata["file_name"] = file_name
 
         try:
-            app_logger.info(f"==> Bắt đầu nạp tài liệu [ID: {parent_id}]")
+            app_logger.info(f"==> Bắt đầu nạp tài liệu [ID: {doc_id}]")
             clean_text = self.loader.load_and_clean(file_bytes, extension)
 
-            parent_node = ParentNode(
-                id=parent_id,
-                full_text=clean_text,
-                metadata=metadata
-            )
-            await self.doc_store.save_parents([parent_node])
-            app_logger.info("-> Đã lưu text gốc vào Postgres.")
+            parent_texts = self._split_text_by_words(clean_text, word_limit=1200)
 
-            child_nodes: List[ChildNode] = self.chunker.split_into_nodes(
-                text=clean_text,
-                parent_id=parent_id,
-                metadata=metadata
-            )
+            parent_nodes: List[ParentNode] = []
+            child_nodes: List[ChildNode] = []
+
+            for i, p_text in enumerate(parent_texts):
+                parent_chunk_id = uuid.uuid4()
+
+                p_node = ParentNode(
+                    id=parent_chunk_id,
+                    doc_id=doc_id,
+                    full_text=p_text,
+                    metadata={**metadata, "chunk_index": i}
+                )
+                parent_nodes.append(p_node)
+
+                children = self.chunker.split_into_nodes(
+                    text=p_text,
+                    parent_id=parent_chunk_id,
+                    metadata=p_node.metadata
+                )
+                child_nodes.extend(children)
+
             if not child_nodes:
                 return False
+
+            await self.doc_store.save_parents(parent_nodes)
+            app_logger.info(f"Đã lưu {len(parent_nodes)} đoạn parent vào Postgres.")
 
             texts_to_embed = [node.text_chunk for node in child_nodes]
             embeddings = await self.embedding_service.embed_batch(texts_to_embed)
@@ -80,16 +99,16 @@ class IngestionPipeline:
             app_logger.error(f"Lỗi Pipeline tại file {file_name}: {e}")
             return False
 
-    async def delete_document(self, parent_id: UUID) -> bool:
+    async def delete_document(self, doc_id: UUID) -> bool:
         try:
-            parent_ids = [parent_id]
+            parent_ids = await self.doc_store.get_parent_ids_by_doc_id(doc_id)
 
             results = await asyncio.gather(
-                self.doc_store.delete_parents(parent_ids),
+                self.doc_store.delete_parents([doc_id]),
                 self.vector_store.delete_children_by_parent_ids(parent_ids),
                 self.keyword_store.delete_children_by_parent_ids(parent_ids)
             )
             return all(results)
         except Exception as e:
-            app_logger.error(f"Lỗi khi xóa tài liệu {parent_id}: {e}")
+            app_logger.error(f"Lỗi khi xóa tài liệu: {e}")
             return False

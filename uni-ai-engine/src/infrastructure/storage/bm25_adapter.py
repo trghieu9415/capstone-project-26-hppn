@@ -8,6 +8,7 @@ from pyvi import ViTokenizer  # Import thư viện cắt từ tiếng Việt
 
 from infrastructure.storage.base import IKeywordStore
 from schemas.document import ChildNode, ScoredNode
+from utils.logger import app_logger
 
 
 class BM25KeywordStore(IKeywordStore):
@@ -81,14 +82,17 @@ class BM25KeywordStore(IKeywordStore):
 
         def _search():
             tokenized_query = self._tokenize(query)
-            scores = self.bm25.get_scores(tokenized_query)
+            app_logger.info(f"[BM25] Tokenized Query: {tokenized_query}")
 
+            scores = self.bm25.get_scores(tokenized_query)
             scored_nodes = list(zip(self.nodes, scores))
 
             if doc_ids is not None and len(doc_ids) > 0:
+                doc_ids_set = set(doc_ids)
                 scored_nodes = [
                     (node, score) for node, score in scored_nodes
-                    if node.parent_id in doc_ids
+                    if node.parent_id in doc_ids_set
+                       or node.metadata.get("doc_id") in doc_ids_set
                 ]
 
             scored_nodes = [x for x in scored_nodes if x[1] > 0]

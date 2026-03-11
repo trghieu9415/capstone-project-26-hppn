@@ -9,6 +9,7 @@ class BaseNode(BaseModel):
 
 
 class ParentNode(BaseNode):
+    doc_id: UUID
     full_text: str
 
 

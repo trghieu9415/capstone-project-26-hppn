@@ -38,6 +38,7 @@ class VectorRetriever:
 
             app_logger.info(
                 f"-> Vector search hoàn tất. Tìm thấy {len(results)} chunks.")
+
             return results
 
         except Exception as e:

@@ -1,5 +1,6 @@
 from typing import List
 from schemas.document import ParentNode
+from utils.logger import app_logger
 
 
 class RAGPromptTemplate:
@@ -11,10 +12,9 @@ class RAGPromptTemplate:
 
             QUY TẮC ỨNG XỬ:
             1. CHỈ sử dụng thông tin được cung cấp trong [NGỮ CẢNH].
-            2. Nếu không có thông tin trong tài liệu, hãy trả lời: 'Xin lỗi, hệ thống không tìm thấy thông tin chính xác trong quy chế để trả lời câu hỏi này. Bạn vui lòng liên hệ Phòng Đào tạo để được hỗ trợ chi tiết hơn.'
-            3. TRÍCH DẪN NGUỒN: Cuối mỗi đoạn thông tin, hãy ghi rõ nguồn (ví dụ: [Nguồn: Quy-che-dao-tao.pdf]).
-            4. ĐỊNH DẠNG: Sử dụng Markdown (bullet points, bảng, in đậm) để thông tin dễ theo dõi.
-            5. TÔNG GIỌNG: Lịch sự, chuyên nghiệp, hỗ trợ.
+            2. Nếu không có thông tin trong tài liệu, hãy trả lời: 'Xin lỗi, hệ thống không tìm thấy thông tin chính xác trong quy chế để trả lời câu hỏi này.'
+            3. ĐỊNH DẠNG: Sử dụng Markdown (bullet points, bảng, in đậm) để thông tin dễ theo dõi.
+            4. TÔNG GIỌNG: Lịch sự, chuyên nghiệp, hỗ trợ.
         """
 
     @staticmethod

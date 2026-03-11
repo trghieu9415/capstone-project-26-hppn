@@ -19,11 +19,28 @@ class Base(DeclarativeBase):
 class ParentDocumentModel(Base):
     __tablename__ = "parent_documents"
     id = Column(PG_UUID(as_uuid=True), primary_key=True)
+    doc_id = Column(PG_UUID(as_uuid=True), index=True, nullable=False)
     full_text = Column(Text, nullable=False)
     extra_data = Column("extra_data", JSONB, default=dict, nullable=False)
 
 
 class PostgresDocumentStore(IDocumentStore):
+    async def get_parent_ids_by_doc_id(self, doc_id: UUID) -> List[UUID]:
+        if not doc_id:
+            return []
+
+        async with self.session_factory() as session:
+            try:
+                stmt = select(ParentDocumentModel.id).where(
+                    ParentDocumentModel.doc_id == doc_id
+                )
+                result = await session.execute(stmt)
+                return list(result.scalars().all())
+            except Exception as e:
+                app_logger.error(
+                    f"Lỗi khi lấy danh sách parent IDs cho doc_id {doc_id}: {e}")
+                return []
+
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]):
         self.session_factory = session_factory
 
@@ -36,6 +53,7 @@ class PostgresDocumentStore(IDocumentStore):
                 values = [
                     {
                         "id": node.id,
+                        "doc_id": node.doc_id,
                         "full_text": node.full_text,
                         "extra_data": node.metadata
                     }
@@ -47,6 +65,7 @@ class PostgresDocumentStore(IDocumentStore):
                     index_elements=['id'],
                     set_={
                         "full_text": stmt.excluded.full_text,
+                        "doc_id": stmt.excluded.doc_id,
                         "extra_data": stmt.excluded.extra_data
                     }
                 )
@@ -73,24 +92,25 @@ class PostgresDocumentStore(IDocumentStore):
             return [
                 ParentNode(
                     id=record.id,
+                    doc_id=record.doc_id,
                     full_text=record.full_text,
                     metadata=record.extra_data
                 )
                 for record in records
             ]
 
-    async def delete_parents(self, parent_ids: List[UUID]) -> bool:
-        if not parent_ids:
+    async def delete_parents(self, doc_ids: List[UUID]) -> bool:
+        if not doc_ids:
             return True
 
         async with self.session_factory() as session:
             try:
                 stmt = delete(ParentDocumentModel).where(
-                    ParentDocumentModel.id.in_(parent_ids))
+                    ParentDocumentModel.doc_id.in_(doc_ids))
                 await session.execute(stmt)
                 await session.commit()
                 return True
             except Exception as e:
                 await session.rollback()
-                print(f"Error deleting parent documents: {e}")
-                return False
+                app_logger.error(f"Lỗi khi xóa parent documents: {e}")
+                raise e

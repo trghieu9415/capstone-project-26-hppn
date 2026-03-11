@@ -1,7 +1,6 @@
-import google.generativeai as genai
-from google.generativeai.types import GenerationConfig
+from google import genai
 from typing import Optional, AsyncGenerator
-
+from google.genai import types  # Thêm dòng này nè bro
 from infrastructure.llms.base import ILLMService
 from configs.settings import settings
 from utils.logger import app_logger
@@ -13,50 +12,18 @@ class GeminiAdapter(ILLMService):
         api_key: str = settings.GEMINI_API_KEY,
         model_name: str = settings.GEMINI_MODEL_NAME
     ):
-        # Cấu hình API key cho toàn bộ module genai
-        genai.configure(api_key=api_key)
+        self.client = genai.Client(api_key=api_key)
         self.model_name = model_name
-        app_logger.info(f"Đã khởi tạo GeminiAdapter với model: {self.model_name}")
-
-    # INTERNAL METHOD
-    def _create_model(self, system_prompt: str, temperature: float, max_tokens: int):
-        config = GenerationConfig(
-            temperature=temperature,
-            max_output_tokens=max_tokens,
-        )
-        return genai.GenerativeModel(
-            model_name=self.model_name,
-            system_instruction=system_prompt,
-            generation_config=config
-        )
-
-    # INTERFACE IMPLEMENTATION
-    async def generate(
-        self,
-        system_prompt: str,
-        user_prompt: str,
-        temperature: float = 0.0,
-        max_tokens: int = 1000
-    ) -> Optional[str]:
-
-        if not user_prompt or not user_prompt.strip():
-            return None
-
-        try:
-            model = self._create_model(system_prompt, temperature, max_tokens)
-            response = await model.generate_content_async(user_prompt)
-            return response.text
-
-        except Exception as e:
-            app_logger.error(f"Lỗi khi gọi Gemini API (Generate): {e}")
-            return None
+        app_logger.info(
+            f"Đã khởi tạo GeminiAdapter (GenAI SDK) với model: {self.model_name}")
+        app_logger.info(f"api_key: {api_key[:5]}...{api_key[-5:]}")
 
     async def generate_stream(
         self,
         system_prompt: str,
         user_prompt: str,
         temperature: float = 0.0,
-        max_tokens: int = 1000
+        max_tokens: int = 2000
     ) -> AsyncGenerator[str, None]:
 
         if not user_prompt or not user_prompt.strip():
@@ -64,12 +31,42 @@ class GeminiAdapter(ILLMService):
             return
 
         try:
-            model = self._create_model(system_prompt, temperature, max_tokens)
-            response = await model.generate_content_async(user_prompt, stream=True)
-            async for chunk in response:
+            config = types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                temperature=temperature,
+                max_output_tokens=max_tokens,
+            )
+
+            stream = await self.client.aio.models.generate_content_stream(
+                model=self.model_name,
+                contents=user_prompt,
+                config=config
+            )
+
+            async for chunk in stream:
                 if chunk.text:
                     yield chunk.text
 
         except Exception as e:
             app_logger.error(f"Lỗi khi gọi Gemini API (Stream): {e}")
-            yield f"\n[Hệ thống AI đang gặp sự cố gián đoạn, vui lòng thử lại sau. Lỗi: {e}]"
+            yield f"\n[Lỗi kết nối AI: {e}]"
+
+    async def generate(self, system_prompt, user_prompt, temperature=0.0,
+                       max_tokens=1000):
+        try:
+            config = types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                temperature=temperature,
+                max_output_tokens=max_tokens,
+            )
+
+            response = await self.client.aio.models.generate_content(
+                model=self.model_name,
+                contents=user_prompt,
+                config=config
+            )
+
+            return response.text
+        except Exception as e:
+            app_logger.error(f"Lỗi Generate: {e}")
+            return None

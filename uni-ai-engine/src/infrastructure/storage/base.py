@@ -15,7 +15,11 @@ class IDocumentStore(ABC):
         pass
 
     @abstractmethod
-    async def delete_parents(self, parent_ids: List[UUID]) -> bool:
+    async def delete_parents(self, doc_ids: List[UUID]) -> bool:
+        pass
+
+    @abstractmethod
+    async def get_parent_ids_by_doc_id(self, doc_id: UUID) -> List[UUID]:
         pass
 
 

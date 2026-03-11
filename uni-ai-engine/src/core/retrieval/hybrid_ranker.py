@@ -14,7 +14,7 @@ class HybridRanker:
         results: List[ScoredNode],
         rrf_map: Dict[UUID, Dict[str, Any]]
     ):
-        for rank, scored_node in enumerate(results):
+        for rank, scored_node in enumerate(results, start=1):
             node_id = scored_node.node.id
 
             if node_id not in rrf_map:

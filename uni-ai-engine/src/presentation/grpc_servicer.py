@@ -8,7 +8,7 @@ from core.rag_service import RAGService
 from utils.logger import app_logger
 
 
-class RagEngineServicer(rag_pb2_grpc.RagEngineServiceServicer):
+class GrpcRagServicer(rag_pb2_grpc.RagEngineServiceServicer):
     def __init__(self, ingestion_pipeline: IngestionPipeline, rag_service: RAGService):
         self.pipeline = ingestion_pipeline
         self.rag_service = rag_service
@@ -34,7 +34,7 @@ class RagEngineServicer(rag_pb2_grpc.RagEngineServiceServicer):
                 file_bytes=bytes(full_bytes),
                 file_name=file_name,
                 extension=extension,
-                parent_id=UUID(doc_id)
+                doc_id=UUID(doc_id)
             )
 
             if success:
