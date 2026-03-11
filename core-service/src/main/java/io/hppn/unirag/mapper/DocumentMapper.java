@@ -26,21 +26,6 @@ public interface DocumentMapper {
         return Optional.ofNullable(parent).map(this::toDocumentFolderDto);
     }
 
-    @Mapping(target = "folder", source = "folder")
-    @Mapping(target = "tags", source = "tags")
-    @Mapping(target = "createdAt", ignore = true)
-    DocumentEntity toEntity(DocumentUpdateDTO dto);
-
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "folder", source = "folder")
-    @Mapping(target = "tags", source = "tags")
-    void updateEntity(@MappingTarget DocumentEntity entity, DocumentUpdateDTO dto);
-
-    default UUID unwrapOptional(Optional<UUID> optionalId) {
-        return optionalId != null ? optionalId.orElse(null) : null;
-    }
-
     default FolderEntity mapFolderById(UUID id) {
         if (id == null) return null;
         FolderEntity folder = new FolderEntity();

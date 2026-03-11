@@ -43,6 +43,9 @@ public class DocumentServiceImpl implements DocumentService {
         var entity = new DocumentEntity();
 
         var folder = folderRepository.getReferenceById(folderId);
+        if (folder == null) {
+            throw new EntityNotFoundException("Folder with Id not found");
+        }
         entity.setName(fileName);
         entity.setExtension(extension);
         entity.setFolder(folder);
@@ -67,8 +70,32 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
+    @Transactional
     public DocumentDTO update(UUID id, DocumentUpdateDTO dto) {
-        return null;
+        DocumentEntity entity = documentRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy tài liệu với ID: " + id));
+
+        if (dto.name() != null && !dto.name().isBlank()) {
+            entity.setName(dto.name());
+        }
+        if (dto.extension() != null && !dto.extension().isBlank()) {
+            entity.setExtension(dto.extension());
+        }
+
+        if (dto.folder() != null) {
+            var folder = folderRepository.findById(dto.folder())
+                .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy Folder mới với ID: " + dto.folder()));
+            entity.setFolder(folder);
+        }
+
+        if (dto.tags() != null) {
+            var newTags = new HashSet<>(tagRepository.findAllById(dto.tags()));
+            entity.getTags().clear();
+            entity.getTags().addAll(newTags);
+        }
+
+        entity = documentRepository.save(entity);
+        return documentMapper.toDto(entity);
     }
 
     @Override
