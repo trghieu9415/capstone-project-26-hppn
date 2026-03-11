@@ -1,5 +1,7 @@
 package io.hppn.unirag.client;
 
+import reactor.core.publisher.Flux;
+
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -9,7 +11,5 @@ public interface RagGrpcClient {
 
     void deleteDocument(UUID docId);
 
-    String queryRagSync(String question, List<UUID> docIds);
-
-    void queryRagStream(String question, List<UUID> docIds, Consumer<String> onNextChunk);
+    Flux<String> queryRagStream(String question, List<UUID> docIds);
 }

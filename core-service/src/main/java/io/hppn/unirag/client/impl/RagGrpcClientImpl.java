@@ -9,6 +9,7 @@ import io.hppn.unirag.grpc.*;
 import jakarta.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -121,40 +122,33 @@ public class RagGrpcClientImpl implements RagGrpcClient {
     }
 
     @Override
-    public String queryRagSync(String question, List<UUID> docIds) {
-        QueryRequest.Builder requestBuilder = QueryRequest.newBuilder()
-            .setQuestion(question);
+    public Flux<String> queryRagStream(String question, List<UUID> docIds) {
+        return Flux.create(sink -> {
+            QueryRequest request = QueryRequest.newBuilder()
+                .setQuestion(question)
+                .addAllDocIds(docIds.stream().map(UUID::toString).toList())
+                .build();
 
-        if (docIds != null && !docIds.isEmpty()) {
-            List<String> stringIds = docIds.stream().map(UUID::toString).collect(Collectors.toList());
-            requestBuilder.addAllDocIds(stringIds);
-        }
+            asyncStub.queryRag(request, new StreamObserver<QueryResponse>() {
+                @Override
+                public void onNext(QueryResponse value) {
+                    sink.next(value.getAnswerChunk());
+                }
 
-        StringBuilder fullAnswer = new StringBuilder();
-        try {
-            Iterator<QueryResponse> responseIterator = blockingStub.queryRag(requestBuilder.build());
+                @Override
+                public void onError(Throwable t) {
+                    sink.error(t);
+                }
 
-            while (responseIterator.hasNext()) {
-                QueryResponse response = responseIterator.next();
-                fullAnswer.append(response.getAnswerChunk());
-            }
-            return fullAnswer.toString();
-        } catch (StatusRuntimeException e) {
-            throw new RuntimeException("RAG Query failed: " + e.getStatus(), e);
-        }
-    }
+                @Override
+                public void onCompleted() {
+                    sink.complete();
+                }
+            });
 
-    @Override
-    public void queryRagStream(String question, List<UUID> docIds, Consumer<String> onNextChunk) {
-        QueryRequest.Builder requestBuilder = QueryRequest.newBuilder().setQuestion(question);
-        if (docIds != null && !docIds.isEmpty()) {
-            requestBuilder.addAllDocIds(docIds.stream().map(UUID::toString).collect(Collectors.toList()));
-        }
-
-        Iterator<QueryResponse> responseIterator = blockingStub.queryRag(requestBuilder.build());
-        while (responseIterator.hasNext()) {
-            onNextChunk.accept(responseIterator.next().getAnswerChunk());
-        }
+            sink.onDispose(() -> {
+            });
+        });
     }
 
     @PreDestroy
