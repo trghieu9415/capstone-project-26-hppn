@@ -28,8 +28,7 @@ class RagEngineServicer(rag_pb2_grpc.RagEngineServiceServicer):
 
                 full_bytes.extend(request.chunk_data)
 
-            app_logger.info(
-                f"Đã nhận đủ {len(full_bytes)} bytes cho DocID: {doc_id}")
+            app_logger.info(f"Đã nhận đủ {len(full_bytes)} bytes cho DocID: {doc_id}")
 
             success = await self.pipeline.run(
                 file_bytes=bytes(full_bytes),
