@@ -8,6 +8,7 @@ dependencies = [
     "asyncpg>=0.31.0",
     "autocorrect>=2.6.1",
     "chromadb>=1.5.0",
+    "einops>=0.8.2",
     "fastapi>=0.129.0",
     "google-genai>=1.66.0",
     "grpcio>=1.78.0",
@@ -33,5 +34,8 @@ dependencies = [
     "rank-bm25>=0.2.2",
     "sentence-transformers>=5.2.3",
     "sqlalchemy>=2.0.46",
+    "torch>=2.10.0",
     "uvicorn>=0.41.0",
 ]
+[tool.uv.extra-build-dependencies]
+flash-attn = ["torch"]

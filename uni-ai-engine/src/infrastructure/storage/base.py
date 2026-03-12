@@ -32,8 +32,9 @@ class IVectorStore(ABC):
     async def search_vector(
         self,
         query_embedding: List[float],
-        top_k: int = 5,
+        top_k: int = 6,
         doc_ids: Optional[List[UUID]] = None,
+
     ) -> List[ScoredNode]:
         pass
 
@@ -51,8 +52,9 @@ class IKeywordStore(ABC):
     async def search_keyword(
         self,
         query: str,
-        top_k: int = 5,
+        top_k: int = 6,
         doc_ids: Optional[List[UUID]] = None,
+
     ) -> List[ScoredNode]:
         pass
 

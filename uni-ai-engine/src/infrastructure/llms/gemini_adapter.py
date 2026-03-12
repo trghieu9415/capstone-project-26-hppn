@@ -1,12 +1,12 @@
 from google import genai
 from typing import Optional, AsyncGenerator
-from google.genai import types  # Thêm dòng này nè bro
+from google.genai import types
 from infrastructure.llms.base import ILLMService
 from configs.settings import settings
 from utils.logger import app_logger
 
 
-class GeminiAdapter(ILLMService):
+class GeminiService(ILLMService):
     def __init__(
         self,
         api_key: str = settings.GEMINI_API_KEY,
@@ -15,7 +15,7 @@ class GeminiAdapter(ILLMService):
         self.client = genai.Client(api_key=api_key)
         self.model_name = model_name
         app_logger.info(
-            f"Đã khởi tạo GeminiAdapter (GenAI SDK) với model: {self.model_name}")
+            f"Đã khởi tạo GeminiService (GenAI SDK) với model: {self.model_name}")
         app_logger.info(f"api_key: {api_key[:5]}...{api_key[-5:]}")
 
     async def generate_stream(
@@ -46,6 +46,9 @@ class GeminiAdapter(ILLMService):
             async for chunk in stream:
                 if chunk.text:
                     yield chunk.text
+
+            # for i in range(0, 10):
+            #     yield f"chunk {i}"
 
         except Exception as e:
             app_logger.error(f"Lỗi khi gọi Gemini API (Stream): {e}")

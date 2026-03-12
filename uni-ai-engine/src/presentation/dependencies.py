@@ -12,7 +12,7 @@ from infrastructure.storage.postgres_adapter import PostgresDocumentStore, Base
 from infrastructure.storage.qdrant_adapter import QdrantAdapter
 from infrastructure.storage.bm25_adapter import BM25KeywordStore
 from infrastructure.embeddings.huggingface_adapter import HuggingFaceAdapter
-from infrastructure.llms.gemini_adapter import GeminiAdapter
+from infrastructure.llms.gemini_adapter import GeminiService
 
 
 async def init_db(engine):
@@ -41,7 +41,7 @@ async def init_dependencies():
 
     embedding_service = HuggingFaceAdapter(model_name=settings.EMBEDDING_MODEL_NAME)
 
-    llm_service = GeminiAdapter(
+    llm_service = GeminiService(
         api_key=settings.GEMINI_API_KEY,
         model_name=settings.GEMINI_MODEL_NAME
     )
@@ -56,7 +56,7 @@ async def init_dependencies():
 
     vector_retriever = VectorRetriever(vector_store, embedding_service)
     keyword_retriever = KeywordRetriever(keyword_store)
-    ranker = HybridRanker(k_constant=60)
+    ranker = HybridRanker()
     generator = RAGGenerator(llm_service)
 
     rag_service = RAGService(

@@ -8,17 +8,20 @@ class XlsxParser(BaseParser):
     def extract_text(self, file_bytes: bytes) -> str:
         try:
             stream = io.BytesIO(file_bytes)
-            dfs = pd.read_excel(stream, sheet_name=None)
+            dfs = pd.read_excel(stream, sheet_name=None, engine='openpyxl')
 
             text_parts = []
             for sheet_name, df in dfs.items():
-                text_parts.append(f"### Bảng dữ liệu: {sheet_name}")
+                if df.empty:
+                    continue
 
-                df.dropna(how="all", inplace=True)
-                df.dropna(axis=1, how="all", inplace=True)
+                text_parts.append(f"### Tên Sheet: {sheet_name}")
+                df = df.dropna(how="all").dropna(axis=1, how="all")
+                df = df.reset_index(drop=True)
 
-                text_parts.append(df.to_markdown(index=False, na_rep=""))
-                text_parts.append("\n")
+                table_markdown = df.to_markdown(index=False, na_rep="")
+                text_parts.append(table_markdown)
+                text_parts.append("\n" + "=" * 3 + "\n")
 
             return "\n".join(text_parts)
         except Exception as e:

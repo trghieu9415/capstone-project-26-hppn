@@ -1,7 +1,7 @@
 import asyncio
 from typing import List
 from sentence_transformers import SentenceTransformer
-import torch  # Bổ sung để check thiết bị
+import torch
 
 from infrastructure.embeddings.base import IEmbeddingService
 from utils.logger import app_logger

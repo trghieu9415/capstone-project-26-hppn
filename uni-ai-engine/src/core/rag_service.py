@@ -7,6 +7,7 @@ from core.retrieval.hybrid_ranker import HybridRanker
 from core.retrieval.keyword_retriever import KeywordRetriever
 from core.retrieval.vector_retriever import VectorRetriever
 from infrastructure.storage.base import IDocumentStore
+from utils.logger import app_logger
 
 
 class RAGService:
@@ -38,11 +39,16 @@ class RAGService:
         )
         vector_res, keyword_res = await asyncio.gather(vector_task, keyword_task)
 
-        top_scored_nodes = self.ranker.rerank(vector_res, keyword_res, top_k=top_k)
+        top_scored_nodes = self.ranker.rerank(
+            query,
+            vector_res, keyword_res,
+            top_k=top_k
+        )
         if not top_scored_nodes:
             return []
 
         unique_parent_ids = list(set(sn.node.parent_id for sn in top_scored_nodes))
+        app_logger.info(f"Các parent_id được chọn: {unique_parent_ids}")
         parent_nodes = await self.doc_store.get_parents_by_ids(unique_parent_ids)
 
         return parent_nodes
@@ -51,7 +57,7 @@ class RAGService:
         self,
         query: str,
         doc_ids: Optional[List[UUID]] = None,
-        top_k: int = 5
+        top_k: int = 6
     ) -> str:
         parent_nodes = await self._get_context_nodes(query, top_k, doc_ids)
         return await self.generator.generate_answer(query, parent_nodes)
@@ -60,7 +66,7 @@ class RAGService:
         self,
         query: str,
         doc_ids: Optional[List[UUID]] = None,
-        top_k: int = 5
+        top_k: int = 6
     ) -> AsyncGenerator[str, None]:
         parent_nodes = await self._get_context_nodes(query, top_k, doc_ids)
         async for chunk in self.generator.generate_stream(query, parent_nodes):

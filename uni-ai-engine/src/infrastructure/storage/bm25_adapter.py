@@ -73,8 +73,9 @@ class BM25KeywordStore(IKeywordStore):
     async def search_keyword(
         self,
         query: str,
-        top_k: int = 5,
+        top_k: int = 6,
         doc_ids: Optional[List[UUID]] = None,
+
     ) -> List[ScoredNode]:
 
         if not self.bm25 or not self.nodes:

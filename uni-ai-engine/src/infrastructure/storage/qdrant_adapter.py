@@ -91,8 +91,9 @@ class QdrantAdapter(IVectorStore):
     async def search_vector(
         self,
         query_embedding: List[float],
-        top_k: int = 5,
+        top_k: int = 6,
         doc_ids: Optional[List[UUID]] = None,
+
     ) -> List[ScoredNode]:
 
         query_filter = None
@@ -131,7 +132,7 @@ class QdrantAdapter(IVectorStore):
             return nodes
 
         except Exception as e:
-            app_logger.error(f"❌ Lỗi khi tìm kiếm vector trong Qdrant: {e}")
+            app_logger.error(f"Lỗi khi tìm kiếm vector trong Qdrant: {e}")
             return []
 
     # --- XÓA DỮ LIỆU ---
@@ -155,7 +156,7 @@ class QdrantAdapter(IVectorStore):
             )
             return True
         except Exception as e:
-            app_logger.error(f"❌ Lỗi khi xóa vectors theo parent_ids: {e}")
+            app_logger.error(f"Lỗi khi xóa vectors theo parent_ids: {e}")
             return False
 
     async def delete_children_by_doc_id(self, doc_id: UUID) -> bool:

@@ -33,7 +33,8 @@ class Settings(BaseSettings):
     )
 
     # 5. Cấu hình AI & Embedding Model
-    EMBEDDING_MODEL_NAME: str = Field(default="keepitreal/vietnamese-sbert")
+    # EMBEDDING_MODEL_NAME: str = Field(default="keepitreal/vietnamese-sbert")
+    EMBEDDING_MODEL_NAME: str = Field(default="dangvantuan/vietnamese-embedding")
     VECTOR_SIZE: int = Field(
         default=768,
         description="Kích thước vector của model (sbert là 768)")
