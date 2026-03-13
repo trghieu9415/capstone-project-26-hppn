@@ -1,11 +1,12 @@
-from typing import List
+from typing import List, Dict
 from uuid import UUID
-from sqlalchemy import Column, Text
+from sqlalchemy import Column, Text, String
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import select, delete
 from sqlalchemy.dialects.postgresql import insert
+from torch.ao.ns.fx import mappings
 
 from infrastructure.storage.base import IDocumentStore
 from schemas.document import ParentNode
@@ -14,6 +15,13 @@ from utils.logger import app_logger
 
 class Base(DeclarativeBase):
     pass
+
+
+class DocumentModel(Base):
+    __tablename__ = "documents"
+    id = Column(PG_UUID(as_uuid=True), primary_key=True)
+    name = Column(String, nullable=False)
+    extension = Column(String, nullable=False)
 
 
 class ParentDocumentModel(Base):
@@ -98,6 +106,38 @@ class PostgresDocumentStore(IDocumentStore):
                 )
                 for record in records
             ]
+
+    async def get_doc_names_by_parent_ids(
+        self,
+        parent_ids: List[UUID]
+    ) -> Dict[UUID, str]:
+        if not parent_ids:
+            return {}
+
+        async with self.session_factory() as session:
+            try:
+                stmt = (
+                    select(
+                        ParentDocumentModel.id,
+                        DocumentModel.name,
+                        DocumentModel.extension
+                    )
+                    .join(DocumentModel, ParentDocumentModel.doc_id == DocumentModel.id)
+                    .where(ParentDocumentModel.id.in_(parent_ids))
+                    .distinct()
+                )
+
+                result = await session.execute(stmt)
+                records = result.all()
+                app_logger.info(f"Danh sách doc_names: {records}")
+
+                return {record.id: f"{record.name}{record.extension}"
+                        for record in records}
+
+            except Exception as e:
+                app_logger.error(
+                    f"Lỗi khi lấy danh sách tên document từ parent_ids: {e}")
+                raise e
 
     async def delete_parents(self, doc_ids: List[UUID]) -> bool:
         if not doc_ids:

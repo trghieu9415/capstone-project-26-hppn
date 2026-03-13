@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Dict
 from uuid import UUID
 
 from schemas.document import ChildNode, ParentNode, ScoredNode
@@ -12,6 +12,13 @@ class IDocumentStore(ABC):
 
     @abstractmethod
     async def get_parents_by_ids(self, parent_ids: List[UUID]) -> List[ParentNode]:
+        pass
+
+    @abstractmethod
+    async def get_doc_names_by_parent_ids(
+        self,
+        parent_ids: List[UUID]
+    ) -> Dict[UUID, str]:
         pass
 
     @abstractmethod

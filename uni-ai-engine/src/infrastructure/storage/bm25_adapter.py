@@ -4,7 +4,7 @@ import asyncio
 from typing import List, Optional
 from uuid import UUID
 from rank_bm25 import BM25Okapi
-from pyvi import ViTokenizer  # Import thư viện cắt từ tiếng Việt
+from pyvi import ViTokenizer
 
 from infrastructure.storage.base import IKeywordStore
 from schemas.document import ChildNode, ScoredNode

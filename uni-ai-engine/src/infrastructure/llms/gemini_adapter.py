@@ -47,9 +47,6 @@ class GeminiService(ILLMService):
                 if chunk.text:
                     yield chunk.text
 
-            # for i in range(0, 10):
-            #     yield f"chunk {i}"
-
         except Exception as e:
             app_logger.error(f"Lỗi khi gọi Gemini API (Stream): {e}")
             yield f"\n[Lỗi kết nối AI: {e}]"
