@@ -26,19 +26,19 @@ def _log_rerank_report(
             f.write(f"--- [1] TOP VECTOR RESULTS ({len(v_res)}) ---\n")
             for i, r in enumerate(v_res[:5]):
                 short_text = r.node.text_chunk[:100].replace("\n", " ")
-                f.write(f"Rank {i + 1}: ID={r.node.id} | Content={short_text}...\n")
+                f.write(f"Score={r.score}: ID={r.node.id} | Content:{short_text}...\n")
 
             f.write(f"\n--- [2] TOP KEYWORD RESULTS ({len(k_res)}) ---\n")
             for i, r in enumerate(k_res[:5]):
                 short_text = r.node.text_chunk[:100].replace("\n", " ")
-                f.write(f"Rank {i + 1}: ID={r.node.id} | Content={short_text}...\n")
+                f.write(f"Score={r.score}: ID={r.node.id} | Content={short_text}...\n")
 
             f.write(
                 f"\n--- [3] FINAL CROSS-ENCODER RESULTS (TOP {len(final_items)}) ---\n")
             for i, item in enumerate(final_items):
                 short_text = item['node'].text_chunk[:100].replace("\n", " ")
                 f.write(
-                    f"CE Rank {i + 1}: Score={item['cross_score']:.5f} | Sources={item['sources']} | Content={short_text}...\n")
+                    f"CE Score={r.score}: Score={item['cross_score']:.5f} | Sources={item['sources']} | Content={short_text}...\n")
 
     except Exception as e:
         app_logger.warning(f"Lỗi ghi log rerank: {e}")

@@ -93,7 +93,6 @@ class QdrantAdapter(IVectorStore):
         query_embedding: List[float],
         top_k: int = 6,
         doc_ids: Optional[List[UUID]] = None,
-
     ) -> List[ScoredNode]:
 
         query_filter = None
@@ -137,7 +136,6 @@ class QdrantAdapter(IVectorStore):
 
     # --- XÓA DỮ LIỆU ---
     async def delete_children_by_parent_ids(self, parent_ids: List[UUID]) -> bool:
-        """Xóa theo danh sách parent_id (các đoạn 1200 từ)."""
         if not parent_ids:
             return True
 
@@ -160,7 +158,6 @@ class QdrantAdapter(IVectorStore):
             return False
 
     async def delete_children_by_doc_id(self, doc_id: UUID) -> bool:
-        """Xóa sạch mọi chunk thuộc về 1 file (doc_id)."""
         try:
             await self.client.delete(
                 collection_name=self.collection_name,
