@@ -1,0 +1,5 @@
+{
+  "name": "UniRAG - SGU Academic Advisory System",
+  "description": "An AI-powered RAG system for academic advisory at SGU, featuring knowledge base management and streaming AI chat.",
+  "requestFramePermissions": []
+}
