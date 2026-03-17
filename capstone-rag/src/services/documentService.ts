@@ -2,12 +2,17 @@ import { DocumentDTO, DocumentUpdateDTO } from "@/types/document";
 import apiClient from "./_client";
 
 export const documentService = {
+  getByFolderId: async (folderId: string): Promise<DocumentDTO[]> => {
+    const response = await apiClient.get(`/api/documents/folder/${folderId}`);
+    return response.data;
+  },
+
   getById: async (id: string): Promise<DocumentDTO> => {
     const response = await apiClient.get(`/api/documents/${id}`);
     return response.data;
   },
 
-  // Khởi tạo Document với file upload
+  // Khởi tạo DocumentDTO với file upload
   create: async (folderId: string, file: File): Promise<DocumentDTO> => {
     const formData = new FormData();
     formData.append("file", file);

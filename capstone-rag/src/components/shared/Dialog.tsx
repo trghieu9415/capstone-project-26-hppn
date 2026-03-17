@@ -1,4 +1,5 @@
-import { AnimatePresence, motion } from "motion/react";
+import React from "react";
+import { motion, AnimatePresence } from "motion/react";
 
 interface DialogProps {
   isOpen: boolean;
@@ -9,9 +10,7 @@ interface DialogProps {
   footer?: React.ReactNode;
 }
 
-export const Dialog = (props: DialogProps) => {
-  const { isOpen, onClose, title, description, children, footer } = props;
-
+export const Dialog: React.FC<DialogProps> = ({ isOpen, onClose, title, description, children, footer }) => {
   return (
     <AnimatePresence>
       {isOpen && (

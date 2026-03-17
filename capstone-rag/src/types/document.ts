@@ -22,5 +22,10 @@ export interface DocumentUpdateDTO {
   folder?: string;
   tags?: string[];
   name?: string;
-  extension?: string;
+}
+
+export interface ContextFilters {
+  docIds: string[];
+  folderIds: string[];
+  tagIds: string[];
 }

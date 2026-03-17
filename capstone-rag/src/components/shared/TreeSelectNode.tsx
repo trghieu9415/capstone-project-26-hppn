@@ -1,19 +1,23 @@
+import React, { useState } from "react";
+import { Folder, ChevronRight, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Folder } from "@/types";
-import { ChevronDown, ChevronRight, FolderIcon } from "lucide-react";
-import { useState } from "react";
+import { FolderDTO } from "@/types/folder";
 
 interface TreeSelectNodeProps {
-  folder: Folder;
-  allFolders: Folder[];
+  folder: FolderDTO;
+  allFolders: FolderDTO[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   level?: number;
 }
 
-export const TreeSelectNode = (props: TreeSelectNodeProps) => {
-  const { folder, allFolders, selectedId, onSelect, level = 0 } = props;
-
+export const TreeSelectNode: React.FC<TreeSelectNodeProps> = ({
+  folder,
+  allFolders,
+  selectedId,
+  onSelect,
+  level = 0,
+}) => {
   const [isOpen, setIsOpen] = useState(true);
   const children = allFolders.filter((f) => f.parentId === folder.id);
   const hasChildren = children.length > 0;
@@ -38,7 +42,7 @@ export const TreeSelectNode = (props: TreeSelectNodeProps) => {
         >
           {hasChildren ? isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} /> : <div className="w-3.5" />}
         </div>
-        <FolderIcon size={16} className={cn("mr-2", isSelected ? "text-white" : "text-blue-400")} />
+        <Folder size={16} className={cn("mr-2", isSelected ? "text-white" : "text-blue-400")} />
         <span className="text-sm font-medium truncate">{folder.name}</span>
       </div>
       {isOpen && hasChildren && (
