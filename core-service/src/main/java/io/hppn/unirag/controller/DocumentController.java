@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -24,6 +25,13 @@ public class DocumentController {
     public ResponseEntity<DocumentDTO> getDocumentById(@PathVariable UUID id) {
         return ResponseEntity.ok(documentService.getById(id));
     }
+
+
+    @GetMapping("/folder/{id}")
+    public ResponseEntity<List<DocumentDTO>> getDocumentByFolderId(@PathVariable UUID id) {
+        return ResponseEntity.ok(documentService.getByFolderId(id));
+    }
+
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<DocumentDTO> createDocument(

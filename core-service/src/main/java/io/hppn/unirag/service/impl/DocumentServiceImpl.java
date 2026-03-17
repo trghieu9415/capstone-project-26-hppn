@@ -15,7 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +34,14 @@ public class DocumentServiceImpl implements DocumentService {
         return documentRepository.findById(id)
             .map(documentMapper::toDto)
             .orElseThrow(() -> new EntityNotFoundException("Document not found"));
+    }
+
+    @Override
+    public List<DocumentDTO> getByFolderId(UUID id) {
+        return documentRepository.findByFolderId(id)
+            .stream()
+            .map(documentMapper::toDto)
+            .collect(Collectors.toList());
     }
 
     @Override
