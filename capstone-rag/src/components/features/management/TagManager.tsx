@@ -1,12 +1,16 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Plus, Trash2, Edit2, Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTagStore } from "@/stores/useTagStore";
 import { useUIStore } from "@/stores/useUIStore";
 
 export const TagManager: React.FC = () => {
-  const tags = useTagStore((state) => state.tags);
-  const openDialog = useUIStore((state) => state.openDialog);
+  const { tags, fetchTags } = useTagStore();
+  const { openDialog } = useUIStore();
+
+  useEffect(() => {
+    fetchTags();
+  }, [fetchTags]);
 
   return (
     <div className="space-y-4">
@@ -29,10 +33,8 @@ export const TagManager: React.FC = () => {
               className="group flex items-center justify-between p-3 bg-white border border-slate-100 rounded-2xl hover:shadow-md hover:shadow-slate-200/50 transition-all"
             >
               <div className="flex items-center gap-3">
-                <div className={cn("w-3 h-3 rounded-full shadow-inner", tag.color.split(" ")[0])} />
-                <span className={cn("text-xs font-bold uppercase tracking-wider", tag.color.split(" ")[1])}>
-                  {tag.name}
-                </span>
+                <div className={cn("w-3 h-3 rounded-full shadow-inner")} />
+                <span className={cn("text-xs font-bold uppercase tracking-wider")}>{tag.name}</span>
               </div>
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button

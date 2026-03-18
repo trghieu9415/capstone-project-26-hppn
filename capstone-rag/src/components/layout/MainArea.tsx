@@ -1,5 +1,5 @@
-import React from 'react';
-import { ChatInterface } from '../features/chat/ChatInterface';
+import React from "react";
+import { ChatInterface } from "../features/chat/ChatInterface";
 
 export const MainArea: React.FC = () => {
   return (

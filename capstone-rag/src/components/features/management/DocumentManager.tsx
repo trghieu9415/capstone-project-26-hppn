@@ -1,4 +1,4 @@
-import React from "react";
+import { useEffect } from "react";
 import { FileText, Trash2, Edit2, Search, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDocumentStore } from "@/stores/useDocumentStore";
@@ -6,9 +6,13 @@ import { useTagStore } from "@/stores/useTagStore";
 import { useUIStore } from "@/stores/useUIStore";
 
 export const DocumentManager: React.FC = () => {
-  const { documents } = useDocumentStore();
+  const { documents, fetchDocuments } = useDocumentStore();
   const { tags } = useTagStore();
   const { openDialog } = useUIStore();
+
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments]);
 
   return (
     <div className="space-y-4">

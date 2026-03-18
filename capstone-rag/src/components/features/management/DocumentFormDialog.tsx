@@ -23,14 +23,14 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
   tags,
 }) => {
   const [name, setName] = useState(document.name);
-  const [folderId, setFolderId] = useState(document.folderId);
-  const [tagIds, setTagIds] = useState<string[]>(document.tagIds);
+  const [folderId, setFolderId] = useState(document.folder.id);
+  const [tagIds, setTagIds] = useState<string[]>(document.tags.map((t) => t.id));
 
   useEffect(() => {
     if (isOpen) {
       setName(document.name);
-      setFolderId(document.folderId);
-      setTagIds(document.tagIds);
+      setFolderId(document.folder.id);
+      setTagIds(document.tags.map((t) => t.id));
     }
   }, [isOpen, document]);
 

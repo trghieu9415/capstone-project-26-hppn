@@ -1,5 +1,5 @@
-import React from 'react';
-import { Dialog } from './Dialog';
+import React from "react";
+import { Dialog } from "./Dialog";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -9,7 +9,7 @@ interface ConfirmDialogProps {
   description: string;
   confirmText?: string;
   cancelText?: string;
-  variant?: 'danger' | 'primary';
+  variant?: "danger" | "primary";
 }
 
 export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
@@ -18,9 +18,9 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   onConfirm,
   title,
   description,
-  confirmText = 'Xác nhận',
-  cancelText = 'Hủy',
-  variant = 'primary'
+  confirmText = "Xác nhận",
+  cancelText = "Hủy",
+  variant = "primary",
 }) => {
   return (
     <Dialog
@@ -42,9 +42,9 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
               onClose();
             }}
             className={`px-4 py-2 text-sm font-medium text-white rounded-xl transition-all shadow-sm ${
-              variant === 'danger' 
-                ? 'bg-red-600 hover:bg-red-700 shadow-red-200' 
-                : 'bg-blue-600 hover:bg-blue-700 shadow-blue-200'
+              variant === "danger"
+                ? "bg-red-600 hover:bg-red-700 shadow-red-200"
+                : "bg-blue-600 hover:bg-blue-700 shadow-blue-200"
             }`}
           >
             {confirmText}

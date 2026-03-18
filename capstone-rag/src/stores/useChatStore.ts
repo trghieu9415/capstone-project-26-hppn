@@ -17,6 +17,7 @@ interface ChatState {
 
   // Methods
   setInput: (input: string) => void;
+  askQuestionStream: (request: QueryRequestDTO) => Promise<void>;
   askQuestion: (request: QueryRequestDTO) => Promise<void>;
   stopStreaming: () => void;
   clearChat: () => void;
@@ -47,7 +48,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     });
   },
 
-  askQuestion: async (request: QueryRequestDTO) => {
+  askQuestionStream: async (request: QueryRequestDTO) => {
     const { isReceiving, messages } = get();
     const questionText = request.question?.trim();
 
@@ -90,6 +91,70 @@ export const useChatStore = create<ChatState>((set, get) => ({
         messages: state.messages.map((msg) =>
           msg.id === assistantMessageId
             ? { ...msg, content: msg.content + `\n\n[Lỗi hệ thống]: ${errorMessage}`, isStreaming: false }
+            : msg
+        ),
+      }));
+    }
+  },
+
+  askQuestion: async (request: QueryRequestDTO) => {
+    const { isReceiving, messages } = get();
+    const questionText = request.question?.trim();
+
+    if (!questionText || isReceiving) return;
+
+    const userMessageId = crypto.randomUUID();
+    const assistantMessageId = crypto.randomUUID();
+
+    set({
+      isReceiving: true,
+      error: null,
+      input: "",
+      messages: [
+        ...messages,
+        { id: userMessageId, role: "user", content: questionText },
+        { id: assistantMessageId, role: "assistant", content: "", isStreaming: true },
+      ],
+    });
+
+    try {
+      const fullResponse = await chatService.ask(request);
+
+      if (!get().isReceiving) return;
+      const speedMs = 15;
+      const chunkSize = 3;
+      let currentIndex = 0;
+
+      const typingInterval = setInterval(() => {
+        if (!get().isReceiving || currentIndex >= fullResponse.length) {
+          clearInterval(typingInterval);
+
+          set((state) => ({
+            isReceiving: false,
+            messages: state.messages.map((msg) =>
+              msg.id === assistantMessageId ? { ...msg, content: fullResponse, isStreaming: false } : msg
+            ),
+          }));
+          return;
+        }
+
+        currentIndex += chunkSize;
+        const currentText = fullResponse.slice(0, currentIndex);
+
+        set((state) => ({
+          messages: state.messages.map((msg) =>
+            msg.id === assistantMessageId ? { ...msg, content: currentText } : msg
+          ),
+        }));
+      }, speedMs);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Lỗi phản hồi từ AI Engine";
+      set((state) => ({
+        error: errorMessage,
+        isReceiving: false,
+        messages: state.messages.map((msg) =>
+          msg.id === assistantMessageId
+            ? { ...msg, content: `[Lỗi hệ thống]: ${errorMessage}`, isStreaming: false }
             : msg
         ),
       }));

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Folder, Plus, ChevronRight, ChevronDown, Trash2, Edit2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFolderStore } from "@/stores/useFolderStore";
@@ -88,9 +88,13 @@ const FolderNode: React.FC<FolderNodeProps> = ({ folder, level = 0 }) => {
 };
 
 export const FolderManager: React.FC = () => {
-  const folders = useFolderStore((state) => state.folders);
-  const openDialog = useUIStore((state) => state.openDialog);
+  const { folders, fetchFolders } = useFolderStore();
+  const { openDialog } = useUIStore();
   const rootFolders = folders.filter((f) => !f.parentId);
+
+  useEffect(() => {
+    fetchFolders();
+  }, [fetchFolders]);
 
   return (
     <div className="space-y-1">

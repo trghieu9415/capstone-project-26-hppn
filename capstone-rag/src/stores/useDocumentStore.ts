@@ -14,6 +14,7 @@ interface DocumentState {
   setFilters: (filters: ContextFilters) => void;
   getDocumentsByFolder: (folderId: string) => Promise<void>;
   getDocument: (id: string) => Promise<void>;
+  fetchDocuments: () => Promise<void>;
   uploadDocument: (folderId: string, file: File) => Promise<DocumentDTO>;
   updateDocumentMetadata: (id: string, data: DocumentUpdateDTO) => Promise<void>;
   deleteDocument: (id: string) => Promise<void>;
@@ -57,6 +58,17 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       set({ currentDocument: doc, isLoading: false });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Lỗi khi tải tài liệu";
+      set({ error: errorMessage, isLoading: false });
+    }
+  },
+
+  fetchDocuments: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const docs = await documentService.getAll();
+      set({ documents: docs, isLoading: false });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Lỗi khi tải danh sách tài liệu";
       set({ error: errorMessage, isLoading: false });
     }
   },
