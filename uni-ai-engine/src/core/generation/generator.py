@@ -1,4 +1,4 @@
-from typing import List, AsyncGenerator, Dict
+from typing import List, AsyncGenerator, Optional
 from uuid import UUID
 
 from schemas.document import ParentNode
@@ -10,6 +10,34 @@ from utils.logger import app_logger
 class RAGGenerator:
     def __init__(self, llm_service: ILLMService):
         self.llm_service = llm_service
+
+    async def generate(
+        self, query: str,
+        parent_nodes: List[ParentNode],
+        temperature: float = 0.0,
+        doc_names=None
+    ) -> str:
+        if doc_names is None:
+            doc_names = {}
+
+        app_logger.info(f"Trả lời cho query: '{query}'")
+
+        system_prompt = RAGPromptTemplate.get_system_prompt()
+        user_prompt = RAGPromptTemplate.build_user_prompt(
+            query, parent_nodes, doc_names
+        )
+
+        try:
+            ans = await self.llm_service.generate(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                temperature=temperature,
+            )
+            return "Không có thông tin" if ans is None else ans
+
+
+        except Exception as e:
+            app_logger(f"Lỗi Generate: {e}")
 
     async def generate_stream(
         self, query: str,

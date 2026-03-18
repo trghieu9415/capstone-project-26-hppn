@@ -10,7 +10,7 @@ from presentation.dependencies import init_dependencies
 from presentation.grpc_servicer import GrpcRagServicer
 from utils.logger import app_logger
 
-import rag_service_pb2_grpc as rag_pb2_grpc
+import presentation.generated.rag_service_pb2_grpc as rag_pb2_grpc
 
 
 def _listen_for_keypress(stop_event):

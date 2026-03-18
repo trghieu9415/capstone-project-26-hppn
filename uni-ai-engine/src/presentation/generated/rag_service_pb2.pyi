@@ -52,3 +52,9 @@ class QueryResponse(_message.Message):
     ANSWER_CHUNK_FIELD_NUMBER: _ClassVar[int]
     answer_chunk: str
     def __init__(self, answer_chunk: _Optional[str] = ...) -> None: ...
+
+class QueryFullResponse(_message.Message):
+    __slots__ = ("full_answer",)
+    FULL_ANSWER_FIELD_NUMBER: _ClassVar[int]
+    full_answer: str
+    def __init__(self, full_answer: _Optional[str] = ...) -> None: ...

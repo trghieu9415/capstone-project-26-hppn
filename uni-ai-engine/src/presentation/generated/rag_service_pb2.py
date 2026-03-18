@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x11rag_service.proto\x12\x03rag\"Y\n\rUploadRequest\x12\x0e\n\x06\x64oc_id\x18\x01 \x01(\t\x12\x11\n\textension\x18\x02 \x01(\t\x12\x11\n\tfile_name\x18\x03 \x01(\t\x12\x12\n\nchunk_data\x18\x04 \x01(\x0c\"2\n\x0eUploadResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"\x1f\n\rDeleteRequest\x12\x0e\n\x06\x64oc_id\x18\x01 \x01(\t\"2\n\x0e\x44\x65leteResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"1\n\x0cQueryRequest\x12\x10\n\x08question\x18\x01 \x01(\t\x12\x0f\n\x07\x64oc_ids\x18\x02 \x03(\t\"%\n\rQueryResponse\x12\x14\n\x0c\x61nswer_chunk\x18\x01 \x01(\t2\xbf\x01\n\x10RagEngineService\x12;\n\x0eUploadDocument\x12\x12.rag.UploadRequest\x1a\x13.rag.UploadResponse(\x01\x12\x39\n\x0e\x44\x65leteDocument\x12\x12.rag.DeleteRequest\x1a\x13.rag.DeleteResponse\x12\x33\n\x08QueryRag\x12\x11.rag.QueryRequest\x1a\x12.rag.QueryResponse0\x01\x42(\n\x13io.hppn.unirag.grpcB\x0fRagServiceProtoP\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x11rag_service.proto\x12\x03rag\"Y\n\rUploadRequest\x12\x0e\n\x06\x64oc_id\x18\x01 \x01(\t\x12\x11\n\textension\x18\x02 \x01(\t\x12\x11\n\tfile_name\x18\x03 \x01(\t\x12\x12\n\nchunk_data\x18\x04 \x01(\x0c\"2\n\x0eUploadResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"\x1f\n\rDeleteRequest\x12\x0e\n\x06\x64oc_id\x18\x01 \x01(\t\"2\n\x0e\x44\x65leteResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"1\n\x0cQueryRequest\x12\x10\n\x08question\x18\x01 \x01(\t\x12\x0f\n\x07\x64oc_ids\x18\x02 \x03(\t\"%\n\rQueryResponse\x12\x14\n\x0c\x61nswer_chunk\x18\x01 \x01(\t\"(\n\x11QueryFullResponse\x12\x13\n\x0b\x66ull_answer\x18\x01 \x01(\t2\xfe\x01\n\x10RagEngineService\x12;\n\x0eUploadDocument\x12\x12.rag.UploadRequest\x1a\x13.rag.UploadResponse(\x01\x12\x39\n\x0e\x44\x65leteDocument\x12\x12.rag.DeleteRequest\x1a\x13.rag.DeleteResponse\x12\x33\n\x08QueryRag\x12\x11.rag.QueryRequest\x1a\x12.rag.QueryResponse0\x01\x12=\n\x10QueryRagFullText\x12\x11.rag.QueryRequest\x1a\x16.rag.QueryFullResponseB(\n\x13io.hppn.unirag.grpcB\x0fRagServiceProtoP\x01\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -44,6 +44,8 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_QUERYREQUEST']._serialized_end=303
   _globals['_QUERYRESPONSE']._serialized_start=305
   _globals['_QUERYRESPONSE']._serialized_end=342
-  _globals['_RAGENGINESERVICE']._serialized_start=345
-  _globals['_RAGENGINESERVICE']._serialized_end=536
+  _globals['_QUERYFULLRESPONSE']._serialized_start=344
+  _globals['_QUERYFULLRESPONSE']._serialized_end=384
+  _globals['_RAGENGINESERVICE']._serialized_start=387
+  _globals['_RAGENGINESERVICE']._serialized_end=641
 # @@protoc_insertion_point(module_scope)

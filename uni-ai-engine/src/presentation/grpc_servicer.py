@@ -1,7 +1,7 @@
 from uuid import UUID
 
-import rag_service_pb2 as rag_pb2
-import rag_service_pb2_grpc as rag_pb2_grpc
+import presentation.generated.rag_service_pb2 as rag_pb2
+import presentation.generated.rag_service_pb2_grpc as rag_pb2_grpc
 
 from core.ingestion.pipeline import IngestionPipeline
 from core.rag_service import RAGService
@@ -62,6 +62,25 @@ class GrpcRagServicer(rag_pb2_grpc.RagEngineServiceServicer):
                 message="Không tìm thấy tài liệu hoặc lỗi khi xóa.")
         except Exception as e:
             return rag_pb2.DeleteResponse(success=False, message=str(e))
+
+    async def QueryRagFullText(self, request, context):
+        try:
+            doc_ids = [
+                UUID(id_str) for id_str in request.doc_ids
+            ] if request.doc_ids else None
+
+            app_logger.info(f"Nhận truy vấn RAG: {request.question}")
+
+            answer = await self.rag_service.answer_question(
+                query=request.question,
+                doc_ids=doc_ids
+            )
+            return rag_pb2.QueryFullResponse(full_answer=answer)
+
+        except Exception as e:
+            app_logger.error(f"Lỗi gRPC Query: {e}")
+            return rag_pb2.QueryFullResponse(
+                full_answer=f"\n[Lỗi hệ thống Python: {str(e)}]")
 
     async def QueryRag(self, request, context):
         try:

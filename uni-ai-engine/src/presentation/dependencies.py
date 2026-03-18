@@ -14,6 +14,11 @@ from infrastructure.storage.bm25_adapter import BM25KeywordStore
 from infrastructure.embeddings.huggingface_adapter import HuggingFaceAdapter
 from infrastructure.llms.gemini_adapter import GeminiService
 
+import sys
+import os
+
+sys.path.append(os.path.join(os.path.dirname(__file__), 'generated'))
+
 
 async def init_db(engine):
     async with engine.begin() as conn:

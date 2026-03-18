@@ -50,6 +50,11 @@ class RagEngineServiceStub(object):
                 request_serializer=rag__service__pb2.QueryRequest.SerializeToString,
                 response_deserializer=rag__service__pb2.QueryResponse.FromString,
                 _registered_method=True)
+        self.QueryRagFullText = channel.unary_unary(
+                '/rag.RagEngineService/QueryRagFullText',
+                request_serializer=rag__service__pb2.QueryRequest.SerializeToString,
+                response_deserializer=rag__service__pb2.QueryFullResponse.FromString,
+                _registered_method=True)
 
 
 class RagEngineServiceServicer(object):
@@ -77,6 +82,13 @@ class RagEngineServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def QueryRagFullText(self, request, context):
+        """4. Truy vấn Rag (Full text)
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_RagEngineServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -94,6 +106,11 @@ def add_RagEngineServiceServicer_to_server(servicer, server):
                     servicer.QueryRag,
                     request_deserializer=rag__service__pb2.QueryRequest.FromString,
                     response_serializer=rag__service__pb2.QueryResponse.SerializeToString,
+            ),
+            'QueryRagFullText': grpc.unary_unary_rpc_method_handler(
+                    servicer.QueryRagFullText,
+                    request_deserializer=rag__service__pb2.QueryRequest.FromString,
+                    response_serializer=rag__service__pb2.QueryFullResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -178,6 +195,33 @@ class RagEngineService(object):
             '/rag.RagEngineService/QueryRag',
             rag__service__pb2.QueryRequest.SerializeToString,
             rag__service__pb2.QueryResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def QueryRagFullText(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/rag.RagEngineService/QueryRagFullText',
+            rag__service__pb2.QueryRequest.SerializeToString,
+            rag__service__pb2.QueryFullResponse.FromString,
             options,
             channel_credentials,
             insecure,

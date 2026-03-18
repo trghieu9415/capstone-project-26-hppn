@@ -54,6 +54,22 @@ class RAGService:
 
         return parent_nodes
 
+    async def answer_question(
+        self,
+        query: str,
+        doc_ids: Optional[List[UUID]] = None,
+        top_k: int = 6
+    ) -> str:
+        parent_nodes = await self._get_context_nodes(query, top_k, doc_ids)
+        doc_names = await self.doc_store.get_doc_names_by_parent_ids(
+            [node.id for node in parent_nodes]
+        )
+        return await self.generator.generate(
+            query,
+            parent_nodes,
+            doc_names=doc_names
+        )
+
     async def answer_question_stream(
         self,
         query: str,
