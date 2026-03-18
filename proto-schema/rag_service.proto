@@ -16,6 +16,9 @@ service RagEngineService {
 
   // 3. Truy vấn RAG (Server Streaming)
   rpc QueryRag(QueryRequest) returns (stream QueryResponse);
+
+	// 4. Truy vấn Rag (Full text)
+	rpc QueryRagFullText(QueryRequest) returns (QueryFullResponse);
 }
 
 // MESSAGES
@@ -51,4 +54,8 @@ message QueryRequest {
 
 message QueryResponse {
   string answer_chunk = 1; // Từng đoạn text trả về
+}
+
+message QueryFullResponse {
+	string full_answer = 1; // Câu trả lời đầy đủ sau khi đã tổng hợp
 }
