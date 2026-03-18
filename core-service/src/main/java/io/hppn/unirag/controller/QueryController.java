@@ -1,4 +1,4 @@
-package io.hppn.unirag.presentation.controller;
+package io.hppn.unirag.controller;
 
 import io.hppn.unirag.dto.query.QueryRequestDTO;
 import io.hppn.unirag.service.QueryService;
@@ -14,11 +14,17 @@ public class QueryController {
 
     private final QueryService queryService;
 
-    @PostMapping(value = "/ask", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> ask(@RequestBody QueryRequestDTO dto) {
+    @PostMapping(value = "/ask")
+    public String askQuery(@RequestBody QueryRequestDTO dto) {
+        System.out.println("--- Nhận câu hỏi: " + dto.question());
+        return queryService.ask(dto.question(), dto.docIds(), dto.tagIds(), dto.folderIds());
+    }
+
+    @PostMapping(value = "/ask/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> askStream(@RequestBody QueryRequestDTO dto) {
         System.out.println("--- Nhận câu hỏi: " + dto.question());
 
-        return queryService.ask(
+        return queryService.askStream(
             dto.question(),
             dto.docIds(),
             dto.tagIds(),

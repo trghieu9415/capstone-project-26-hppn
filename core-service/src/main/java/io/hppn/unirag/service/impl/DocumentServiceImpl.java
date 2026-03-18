@@ -37,6 +37,13 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
+    public List<DocumentDTO> getAll() {
+        return documentRepository.findAll()
+            .stream().map(documentMapper::toDto)
+            .collect(Collectors.toList());
+    }
+
+    @Override
     public List<DocumentDTO> getByFolderId(UUID id) {
         return documentRepository.findByFolderId(id)
             .stream()

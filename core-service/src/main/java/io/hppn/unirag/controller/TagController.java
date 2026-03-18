@@ -33,7 +33,8 @@ public class TagController {
     public ResponseEntity<TagDTO> createTag(@RequestBody TagUpsertDTO request) {
         TagUpsertDTO createDto = new TagUpsertDTO(
             Optional.empty(),
-            request.name()
+            request.name(),
+            request.color()
         );
         TagDTO created = tagService.upsert(createDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
@@ -46,7 +47,8 @@ public class TagController {
 
         TagUpsertDTO updateDto = new TagUpsertDTO(
             Optional.of(id),
-            request.name()
+            request.name(),
+            request.color()
         );
         return ResponseEntity.ok(tagService.upsert(updateDto));
     }

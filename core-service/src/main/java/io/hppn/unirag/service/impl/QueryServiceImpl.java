@@ -9,6 +9,7 @@ import reactor.core.publisher.Flux;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -18,28 +19,49 @@ public class QueryServiceImpl implements QueryService {
     private final DocumentRepository documentRepository;
 
     @Override
-    public Flux<String> ask(String question, List<UUID> docIds, List<UUID> tagIds, List<UUID> folderIds) {
-        HashSet<UUID> finalDocIds = new HashSet<>();
-        if (docIds != null && !docIds.isEmpty()) {
-            finalDocIds.addAll(docIds);
-        }
+    public String ask(String question, List<UUID> docIds, List<UUID> tagIds, List<UUID> folderIds) {
+        List<UUID> finalDocIds = resolveDocumentIds(docIds, tagIds, folderIds);
+        return ragGrpcClient.queryRag(question, finalDocIds);
+    }
 
-        if ((folderIds != null && !folderIds.isEmpty()) || (tagIds != null && !tagIds.isEmpty())) {
-            List<UUID> filteredIds = documentRepository.findIdsByFoldersAndTags(
-                (folderIds != null && folderIds.isEmpty()) ? null : folderIds,
-                (tagIds != null && tagIds.isEmpty()) ? null : tagIds
-            );
-            finalDocIds.addAll(filteredIds);
-        }
+    @Override
+    public Flux<String> askStream(String question, List<UUID> docIds, List<UUID> tagIds, List<UUID> folderIds) {
+        List<UUID> finalDocIds = resolveDocumentIds(docIds, tagIds, folderIds);
 
         if (finalDocIds.isEmpty() && isFiltering(docIds, tagIds, folderIds)) {
             return Flux.just("Không tìm thấy tài liệu nào khớp với bộ lọc của bạn.");
         }
 
-        return ragGrpcClient.queryRagStream(question, List.copyOf(finalDocIds));
+        return ragGrpcClient.queryRagStream(question, finalDocIds);
     }
 
-    private boolean isFiltering(List<UUID> d, List<UUID> t, List<UUID> f) {
-        return (d != null && !d.isEmpty()) || (t != null && !t.isEmpty()) || (f != null && !f.isEmpty());
+
+    private List<UUID> resolveDocumentIds(List<UUID> docIds, List<UUID> tagIds, List<UUID> folderIds) {
+        Set<UUID> finalDocIds = new HashSet<>();
+
+        if (!isNullOrEmpty(docIds)) {
+            finalDocIds.addAll(docIds);
+        }
+
+        if (!isNullOrEmpty(folderIds) || !isNullOrEmpty(tagIds)) {
+            List<UUID> filteredIds = documentRepository.findIdsByFoldersAndTags(
+                isNullOrEmpty(folderIds) ? null : folderIds,
+                isNullOrEmpty(tagIds) ? null : tagIds
+            );
+
+            if (filteredIds != null) {
+                finalDocIds.addAll(filteredIds);
+            }
+        }
+
+        return List.copyOf(finalDocIds);
+    }
+
+    private boolean isFiltering(List<UUID> docIds, List<UUID> tagIds, List<UUID> folderIds) {
+        return !isNullOrEmpty(docIds) || !isNullOrEmpty(tagIds) || !isNullOrEmpty(folderIds);
+    }
+
+    private boolean isNullOrEmpty(List<?> list) {
+        return list == null || list.isEmpty();
     }
 }

@@ -5,6 +5,7 @@ import java.util.UUID;
 
 public record TagUpsertDTO(
     Optional<UUID> id,
-    String name
+    String name,
+    String color
 ) {
 }

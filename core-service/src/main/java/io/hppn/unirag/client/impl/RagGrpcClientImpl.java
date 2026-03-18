@@ -11,15 +11,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 @Service
 public class RagGrpcClientImpl implements RagGrpcClient {
@@ -116,6 +112,21 @@ public class RagGrpcClientImpl implements RagGrpcClient {
             if (!response.getSuccess()) {
                 throw new RuntimeException("AI Engine failed to delete doc: " + response.getMessage());
             }
+        } catch (StatusRuntimeException e) {
+            throw new RuntimeException("gRPC call failed: " + e.getStatus(), e);
+        }
+    }
+
+    @Override
+    public String queryRag(String question, List<UUID> docIds) {
+        try {
+            QueryRequest request = QueryRequest.newBuilder()
+                .setQuestion(question)
+                .addAllDocIds(docIds.stream().map(UUID::toString).toList())
+                .build();
+
+            var response = blockingStub.queryRagFullText(request);
+            return response.getFullAnswer();
         } catch (StatusRuntimeException e) {
             throw new RuntimeException("gRPC call failed: " + e.getStatus(), e);
         }

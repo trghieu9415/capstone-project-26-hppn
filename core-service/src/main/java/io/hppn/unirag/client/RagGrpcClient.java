@@ -11,5 +11,7 @@ public interface RagGrpcClient {
 
     void deleteDocument(UUID docId);
 
+    String queryRag(String question, List<UUID> docIds);
+
     Flux<String> queryRagStream(String question, List<UUID> docIds);
 }

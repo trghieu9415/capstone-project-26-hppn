@@ -9,6 +9,8 @@ import java.util.UUID;
 public interface DocumentService {
     DocumentDTO getById(UUID id);
 
+    List<DocumentDTO> getAll();
+
     List<DocumentDTO> getByFolderId(UUID id);
 
     DocumentDTO create(UUID folder, String fileName, String extension, byte[] fileBytes);

@@ -26,6 +26,11 @@ public class DocumentController {
         return ResponseEntity.ok(documentService.getById(id));
     }
 
+    @GetMapping("")
+    public ResponseEntity<List<DocumentDTO>> getAll() {
+        return ResponseEntity.ok(documentService.getAll());
+    }
+
 
     @GetMapping("/folder/{id}")
     public ResponseEntity<List<DocumentDTO>> getDocumentByFolderId(@PathVariable UUID id) {
