@@ -12,7 +12,6 @@ export const Sidebar: React.FC = () => {
   const activeTab = useUIStore((state) => state.activeTab);
   const setActiveTab = useUIStore((state) => state.setActiveTab);
 
-  // Strategy Pattern for Tab Content
   const TAB_CONTENT: Record<TabType, React.ReactNode> = {
     folders: <FolderManager />,
     documents: <DocumentManager />,
@@ -20,9 +19,9 @@ export const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside className="w-80 bg-slate-50/50 border-r border-slate-200 flex flex-col h-full overflow-hidden">
-      <div className="p-6">
-        <div className="flex items-center gap-3 mb-8">
+    <aside className="w-80 bg-slate-50/50 border-r border-slate-200 flex flex-col h-screen overflow-hidden">
+      <div className="p-6 flex flex-col h-full">
+        <div className="flex items-center gap-3 mb-8 shrink-0">
           <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200">
             <Database className="text-white" size={20} />
           </div>
@@ -32,7 +31,7 @@ export const Sidebar: React.FC = () => {
           </div>
         </div>
 
-        <nav className="flex p-1.5 bg-slate-100 rounded-2xl mb-8">
+        <nav className="flex p-1.5 bg-slate-100 rounded-2xl mb-8 shrink-0">
           {(["folders", "documents", "tags"] as const).map((tab) => (
             <button
               key={tab}
@@ -49,7 +48,7 @@ export const Sidebar: React.FC = () => {
           ))}
         </nav>
 
-        <div className="overflow-y-auto flex-1 custom-scrollbar pr-1">{TAB_CONTENT[activeTab]}</div>
+        <div className="flex-1 flex flex-col min-h-0">{TAB_CONTENT[activeTab]}</div>
       </div>
     </aside>
   );

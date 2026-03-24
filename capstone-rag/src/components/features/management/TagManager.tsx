@@ -13,8 +13,8 @@ export const TagManager: React.FC = () => {
   }, [fetchTags]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between px-2">
+    <div className="flex flex-col h-full space-y-4">
+      <div className="flex items-center justify-between px-2 shrink-0">
         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Nhãn</h3>
         <button
           onClick={() => openDialog("add-tag")}
@@ -25,7 +25,7 @@ export const TagManager: React.FC = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-2 px-1">
+      <div className="grid grid-cols-1 gap-2 px-1 flex-1 overflow-y-auto custom-scrollbar min-h-0 content-start pb-4">
         {tags.length > 0 ? (
           tags.map((tag) => (
             <div
@@ -33,7 +33,7 @@ export const TagManager: React.FC = () => {
               className="group flex items-center justify-between p-3 bg-white border border-slate-100 rounded-2xl hover:shadow-md hover:shadow-slate-200/50 transition-all"
             >
               <div className="flex items-center gap-3">
-                <div className={cn("w-3 h-3 rounded-full shadow-inner")} />
+                <div className={cn("size-5 rounded-full shadow-inner", tag.color)} />
                 <span className={cn("text-xs font-bold uppercase tracking-wider")}>{tag.name}</span>
               </div>
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

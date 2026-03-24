@@ -1,7 +1,12 @@
-import { FolderDTO, FolderUpsertDTO } from "@/types/folder";
+import { FolderDTO, FolderUpsertDTO, SystemNodeDTO } from "@/types/folder";
 import apiClient from "./_client";
 
 export const folderService = {
+  getSystemNodes: async (): Promise<SystemNodeDTO[]> => {
+    const response = await apiClient.get<SystemNodeDTO[]>("/api/folders/all");
+    return response.data;
+  },
+
   getAll: async (): Promise<FolderDTO[]> => {
     const response = await apiClient.get("/api/folders");
     return response.data;

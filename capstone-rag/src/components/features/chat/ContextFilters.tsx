@@ -66,25 +66,27 @@ export const ContextFilters: React.FC = () => {
             Thư mục
           </p>
           <div className="h-48 overflow-y-auto space-y-1 pr-2 border-r border-slate-100 custom-scrollbar">
-            {folders.map((f) => (
-              <label
-                key={f.id}
-                className="flex items-center gap-2 p-2 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors group"
-              >
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 transition-all"
-                  checked={filters.folderIds.includes(f.id)}
-                  onChange={(e) => {
-                    const newIds = e.target.checked
-                      ? [...filters.folderIds, f.id]
-                      : filters.folderIds.filter((id) => id !== f.id);
-                    setFilters({ ...filters, folderIds: newIds });
-                  }}
-                />
-                <span className="text-xs text-slate-600 truncate group-hover:text-blue-600">{f.name}</span>
-              </label>
-            ))}
+            {folders
+              .filter((f) => f.type !== "DOCUMENT")
+              .map((f) => (
+                <label
+                  key={f.id}
+                  className="flex items-center gap-2 p-2 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors group"
+                >
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 transition-all"
+                    checked={filters.folderIds.includes(f.id)}
+                    onChange={(e) => {
+                      const newIds = e.target.checked
+                        ? [...filters.folderIds, f.id]
+                        : filters.folderIds.filter((id) => id !== f.id);
+                      setFilters({ ...filters, folderIds: newIds });
+                    }}
+                  />
+                  <span className="text-xs text-slate-600 truncate group-hover:text-blue-600">{f.name}</span>
+                </label>
+              ))}
           </div>
         </div>
         <div className="space-y-3">

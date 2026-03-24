@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { Folder, ChevronRight, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { FolderDTO } from "@/types/folder";
+import { SystemNodeDTO } from "@/types/folder";
 
 interface TreeSelectNodeProps {
-  folder: FolderDTO;
-  allFolders: FolderDTO[];
+  folder: SystemNodeDTO;
+  allFolders: SystemNodeDTO[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   level?: number;
@@ -18,15 +18,16 @@ export const TreeSelectNode: React.FC<TreeSelectNodeProps> = ({
   onSelect,
   level = 0,
 }) => {
-  const [isOpen, setIsOpen] = useState(true);
-  const children = allFolders.filter((f) => f.parentId === folder.id);
+  const [isOpen, setIsOpen] = useState(false);
+  // Chỉ lấy Folder con, lọc bỏ DOCUMENT
+  const children = allFolders.filter((f) => f.parentId === folder.id && f.type !== "DOCUMENT");
   const hasChildren = children.length > 0;
   const isSelected = selectedId === folder.id;
 
   return (
     <div className="select-none">
       <div
-        onClick={() => onSelect(folder.id)}
+        onClick={() => onSelect(folder.id!)}
         className={cn(
           "flex items-center py-2 px-3 rounded-xl cursor-pointer transition-all mb-1",
           isSelected ? "bg-blue-600 text-white shadow-md" : "hover:bg-slate-100 text-slate-600",

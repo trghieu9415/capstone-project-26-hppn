@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Dialog } from "../../shared/Dialog";
 import { TreeSelectNode } from "../../shared/TreeSelectNode";
-import { FolderDTO } from "@/types/folder";
+import { SystemNodeDTO } from "@/types/folder";
 import { DocumentDTO } from "@/types/document";
 import { TagDTO } from "@/types/tag";
 
@@ -10,7 +10,7 @@ interface DocumentFormDialogProps {
   onClose: () => void;
   onSave: (id: string, name: string, folderId: string, tagIds: string[]) => void;
   document: DocumentDTO;
-  folders: FolderDTO[];
+  folders: SystemNodeDTO[];
   tags: TagDTO[];
 }
 
@@ -34,7 +34,7 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
     }
   }, [isOpen, document]);
 
-  const rootFolders = folders.filter((f) => !f.parentId);
+  const rootFolders = folders.filter((f) => !f.parentId && f.type !== "DOCUMENT");
 
   return (
     <Dialog
@@ -72,7 +72,7 @@ export const DocumentFormDialog: React.FC<DocumentFormDialogProps> = ({
 
         <div className="space-y-2">
           <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Thư mục</label>
-          <div className="border border-slate-100 rounded-2xl p-2 max-h-48 overflow-y-auto bg-slate-50/30">
+          <div className="border border-slate-100 rounded-2xl p-2 max-h-48 overflow-y-auto bg-slate-50/30 custom-scrollbar">
             {rootFolders.map((folder) => (
               <TreeSelectNode
                 key={folder.id}

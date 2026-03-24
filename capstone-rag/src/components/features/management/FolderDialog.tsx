@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Dialog } from "../../shared/Dialog";
 import { TreeSelectNode } from "../../shared/TreeSelectNode";
-import { FolderDTO } from "@/types/folder";
+import { SystemNodeDTO } from "@/types/folder";
 
 interface FolderDialogProps {
   isOpen: boolean;
@@ -10,7 +10,7 @@ interface FolderDialogProps {
   title: string;
   initialName?: string;
   initialParentId?: string | null;
-  folders: FolderDTO[];
+  folders: SystemNodeDTO[];
   currentFolderId?: string;
 }
 
@@ -34,7 +34,7 @@ export const FolderDialog: React.FC<FolderDialogProps> = ({
     }
   }, [isOpen, initialName, initialParentId]);
 
-  const rootFolders = folders.filter((f) => !f.parentId && f.id !== currentFolderId);
+  const rootFolders = folders.filter((f) => !f.parentId && f.id !== currentFolderId && f.type !== "DOCUMENT");
 
   return (
     <Dialog
@@ -74,7 +74,7 @@ export const FolderDialog: React.FC<FolderDialogProps> = ({
 
         <div className="space-y-2">
           <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Thư mục cha</label>
-          <div className="border border-slate-100 rounded-2xl p-2 max-h-48 overflow-y-auto bg-slate-50/30">
+          <div className="border border-slate-100 rounded-2xl p-2 max-h-48 overflow-y-auto bg-slate-50/30 custom-scrollbar">
             <div
               onClick={() => setParentId(null)}
               className={`flex items-center py-2 px-3 rounded-xl cursor-pointer transition-all mb-1 ${

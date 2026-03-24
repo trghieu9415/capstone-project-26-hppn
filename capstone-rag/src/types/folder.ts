@@ -10,3 +10,11 @@ export interface FolderUpsertDTO {
   name?: string;
   parentId?: string;
 }
+
+export interface SystemNodeDTO {
+  id: string;
+  name: string;
+  parentId: string | null;
+  type: "FOLDER" | "DOCUMENT";
+  tagIds: string[];
+}
