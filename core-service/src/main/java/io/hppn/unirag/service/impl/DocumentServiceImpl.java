@@ -33,7 +33,7 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentDTO getById(UUID id) {
         return documentRepository.findById(id)
             .map(documentMapper::toDto)
-            .orElseThrow(() -> new EntityNotFoundException("Document not found"));
+            .orElseThrow(() -> new EntityNotFoundException("DOCUMENT not found"));
     }
 
     @Override
@@ -119,7 +119,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Transactional
     public void delete(UUID id) {
         if (!documentRepository.existsById(id)) {
-            throw new EntityNotFoundException("Document not found");
+            throw new EntityNotFoundException("DOCUMENT not found");
         }
 
         try {

@@ -1,30 +1,19 @@
 package io.hppn.unirag.mapper;
 
 import io.hppn.unirag.dto.document.DocumentDTO;
-import io.hppn.unirag.dto.document.DocumentFolder;
-import io.hppn.unirag.dto.document.DocumentTag;
-import io.hppn.unirag.dto.document.request.DocumentUpdateDTO;
 import io.hppn.unirag.persistence.entity.DocumentEntity;
 import io.hppn.unirag.persistence.entity.FolderEntity;
 import io.hppn.unirag.persistence.entity.TagEntity;
 import org.mapstruct.*;
 
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface DocumentMapper {
+    @Mapping(target = "folder", source = "folder.id")
     DocumentDTO toDto(DocumentEntity entity);
-
-    DocumentFolder toDocumentFolderDto(FolderEntity folder);
-
-    DocumentTag toDocumentTagDto(TagEntity tag);
-
-    default Optional<DocumentFolder> mapParentFolder(FolderEntity parent) {
-        return Optional.ofNullable(parent).map(this::toDocumentFolderDto);
-    }
 
     default FolderEntity mapFolderById(UUID id) {
         if (id == null) return null;

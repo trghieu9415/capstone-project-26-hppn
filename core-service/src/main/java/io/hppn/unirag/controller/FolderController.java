@@ -2,6 +2,7 @@ package io.hppn.unirag.controller;
 
 import io.hppn.unirag.dto.folder.FolderDTO;
 import io.hppn.unirag.dto.folder.request.FolderUpsertDTO;
+import io.hppn.unirag.dto.systemnode.SystemNodeDTO;
 import io.hppn.unirag.service.FolderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,12 @@ import java.util.UUID;
 public class FolderController {
 
     private final FolderService folderService;
+
+    // Eager Loading
+    @GetMapping("/all")
+    public ResponseEntity<List<SystemNodeDTO>> getSystemNodes() {
+        return ResponseEntity.ok(folderService.getSystemNodes());
+    }
 
     // Lấy toàn bộ danh sách Folder
     @GetMapping

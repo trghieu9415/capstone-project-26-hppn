@@ -2,6 +2,9 @@ package io.hppn.unirag.service.impl;
 
 import io.hppn.unirag.dto.folder.FolderDTO;
 import io.hppn.unirag.dto.folder.request.FolderUpsertDTO;
+import io.hppn.unirag.dto.systemnode.DocumentTagMapping;
+import io.hppn.unirag.dto.systemnode.SystemNodeDTO;
+import io.hppn.unirag.dto.systemnode.SystemNodeType;
 import io.hppn.unirag.mapper.FolderMapper;
 import io.hppn.unirag.persistence.entity.FolderEntity;
 import io.hppn.unirag.persistence.repository.FolderRepository;
@@ -12,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -53,8 +57,42 @@ public class FolderServiceImpl implements FolderService {
     @Override
     @Transactional
     public void delete(UUID id) {
-        // Lưu ý: Trong thực tế bro có thể cần check xem folder có document
-        // hoặc folder con bên trong không trước khi xóa.
         folderRepository.deleteById(id);
     }
+
+    @Override
+    public List<SystemNodeDTO> getSystemNodes() {
+        List<SystemNodeDTO> nodes = folderRepository.findBaseSystemNodes();
+
+        List<UUID> documentIds = nodes.stream()
+            .filter(node -> node.type() == SystemNodeType.DOCUMENT)
+            .map(SystemNodeDTO::id)
+            .toList();
+
+        if (documentIds.isEmpty()) {
+            return nodes;
+        }
+
+        List<DocumentTagMapping> tagMappings = folderRepository.findTagMappingsByDocumentIds(documentIds);
+
+        Map<UUID, List<UUID>> tagsMap = tagMappings.stream()
+            .collect(Collectors.groupingBy(
+                DocumentTagMapping::documentId,
+                Collectors.mapping(DocumentTagMapping::tagId, Collectors.toList())
+            ));
+
+        return nodes.stream().map(node -> {
+            if (node.type() == SystemNodeType.DOCUMENT && tagsMap.containsKey(node.id())) {
+                return new SystemNodeDTO(
+                    node.id(),
+                    node.name(),
+                    node.parentId(),
+                    node.type(),
+                    tagsMap.get(node.id())
+                );
+            }
+            return node;
+        }).toList();
+    }
+
 }

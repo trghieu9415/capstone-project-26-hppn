@@ -1,5 +1,6 @@
 package io.hppn.unirag.persistence.repository;
 
+import io.hppn.unirag.dto.systemnode.SystemNodeDTO;
 import io.hppn.unirag.persistence.entity.DocumentEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
