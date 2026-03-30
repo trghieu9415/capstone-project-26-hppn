@@ -4,7 +4,7 @@ from configs.settings import settings
 from core.generation.generator import RAGGenerator
 from core.ingestion.pipeline import IngestionPipeline
 from core.rag_service import RAGService
-from core.retrieval.algorithm_ranker import HybridRanker
+from core.retrieval.hybrid_ranker import HybridRanker
 from core.retrieval.keyword_retriever import KeywordRetriever
 from core.retrieval.vector_retriever import VectorRetriever
 

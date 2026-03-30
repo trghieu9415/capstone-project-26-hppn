@@ -4,6 +4,7 @@ from uuid import UUID
 
 from core.generation.generator import RAGGenerator
 from core.retrieval.hybrid_ranker import HybridRanker
+from core.retrieval.model_ranker import CrossEncoderReranker
 from core.retrieval.keyword_retriever import KeywordRetriever
 from core.retrieval.vector_retriever import VectorRetriever
 from infrastructure.storage.base import IDocumentStore
@@ -17,13 +18,15 @@ class RAGService:
         doc_store: IDocumentStore,
         vector_retriever: VectorRetriever,
         keyword_retriever: KeywordRetriever,
-        ranker: HybridRanker,
+        hybrid_ranker: HybridRanker,
+        cross_encoder_ranker: CrossEncoderReranker,
         generator: RAGGenerator
     ):
         self.doc_store = doc_store
         self.vector_retriever = vector_retriever
         self.keyword_retriever = keyword_retriever
-        self.ranker = ranker
+        self.hybrid_ranker = hybrid_ranker
+        self.cross_encoder_ranker = cross_encoder_ranker
         self.generator = generator
 
     async def _get_context_nodes(
@@ -40,11 +43,14 @@ class RAGService:
         )
         vector_res, keyword_res = await asyncio.gather(vector_task, keyword_task)
 
-        top_scored_nodes = self.ranker.rerank(
-            query,
-            vector_res, keyword_res,
-            top_k=top_k
+        top_scored_nodes = self.hybrid_ranker.rerank(
+            vector_res, keyword_res, top_k=top_k
         )
+
+        top_scored_nodes = self.cross_encoder_ranker.rerank(
+            query, top_scored_nodes, top_k=top_k
+        )
+
         if not top_scored_nodes:
             return []
 

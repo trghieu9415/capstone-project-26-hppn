@@ -19,7 +19,7 @@ class VectorRetriever:
     async def retrieve(
         self,
         query: str,
-        top_k: int = 6,
+        top_k: int = 10,
         doc_ids: Optional[List[UUID]] = None
     ) -> List[ScoredNode]:
         try:
