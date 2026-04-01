@@ -4,14 +4,21 @@ import presentation.generated.rag_service_pb2 as rag_pb2
 import presentation.generated.rag_service_pb2_grpc as rag_pb2_grpc
 
 from core.ingestion.pipeline import IngestionPipeline
+from core.naive_rag_service import NaiveRAGService
 from core.rag_service import RAGService
 from utils.logger import app_logger
 
 
 class GrpcRagServicer(rag_pb2_grpc.RagEngineServiceServicer):
-    def __init__(self, ingestion_pipeline: IngestionPipeline, rag_service: RAGService):
+    def __init__(
+        self,
+        ingestion_pipeline: IngestionPipeline,
+        rag_service: RAGService,
+        naive_rag_service: NaiveRAGService
+    ):
         self.pipeline = ingestion_pipeline
         self.rag_service = rag_service
+        self.naive_rag_service = naive_rag_service
 
     async def UploadDocument(self, request_iterator, context):
         full_bytes = bytearray()
@@ -71,7 +78,7 @@ class GrpcRagServicer(rag_pb2_grpc.RagEngineServiceServicer):
 
             app_logger.info(f"Nhận truy vấn RAG: {request.question}")
 
-            answer = await self.rag_service.answer_question(
+            answer = await self.naive_rag_service.answer_question(
                 query=request.question,
                 doc_ids=doc_ids
             )

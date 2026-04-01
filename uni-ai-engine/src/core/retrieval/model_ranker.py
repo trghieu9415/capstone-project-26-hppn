@@ -4,6 +4,8 @@ from typing import List, Dict, Any
 from uuid import UUID
 
 from sentence_transformers import CrossEncoder
+
+from configs.settings import settings
 from schemas.document import ScoredNode
 from utils.logger import app_logger
 
@@ -43,7 +45,7 @@ def _log_rerank_report(
 
 
 class CrossEncoderReranker:
-    def __init__(self, model_name: str = "BAAI/bge-reranker-v2-m3"):
+    def __init__(self, model_name: str = settings.CROSS_ENCODER_MODEL_NAME):
         app_logger.info(f"Đang tải mô hình Cross-Encoder: {model_name}...")
         self.model = CrossEncoder(model_name, max_length=512)
         app_logger.info("Cross-Encoder đã sẵn sàng!")

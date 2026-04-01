@@ -9,6 +9,7 @@ from core.retrieval.keyword_retriever import KeywordRetriever
 from core.retrieval.vector_retriever import VectorRetriever
 from infrastructure.storage.base import IDocumentStore
 from schemas.document import ParentNode
+from utils.evaluator import AnswerEvaluator
 from utils.logger import app_logger
 
 
@@ -20,7 +21,9 @@ class RAGService:
         keyword_retriever: KeywordRetriever,
         hybrid_ranker: HybridRanker,
         cross_encoder_ranker: CrossEncoderReranker,
-        generator: RAGGenerator
+        generator: RAGGenerator,
+        evaluate_on: bool = False,
+        evaluator: AnswerEvaluator = None
     ):
         self.doc_store = doc_store
         self.vector_retriever = vector_retriever
@@ -28,6 +31,8 @@ class RAGService:
         self.hybrid_ranker = hybrid_ranker
         self.cross_encoder_ranker = cross_encoder_ranker
         self.generator = generator
+        self.evaluate_on = evaluate_on
+        self.evaluator = evaluator
 
     async def _get_context_nodes(
         self,
@@ -70,11 +75,18 @@ class RAGService:
         doc_names = await self.doc_store.get_doc_names_by_parent_ids(
             [node.id for node in parent_nodes]
         )
-        return await self.generator.generate(
+        answer = await self.generator.generate(
             query,
             parent_nodes,
             doc_names=doc_names
         )
+
+        if self.evaluate_on:
+            results = self.evaluator.evaluate_answer(query, answer, parent_nodes)
+            app_logger.info(
+                f"Faithfulness: {results.faithfulness} - Relevance: {results.relevance}"
+            )
+        return answer
 
     async def answer_question_stream(
         self,

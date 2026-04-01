@@ -1,7 +1,7 @@
 from typing import List, AsyncGenerator, Optional
 from uuid import UUID
 
-from schemas.document import ParentNode
+from schemas.document import ParentNode, ChildNode
 from core.generation.prompts import RAGPromptTemplate
 from infrastructure.llms.base import ILLMService
 from utils.logger import app_logger
@@ -11,6 +11,30 @@ class RAGGenerator:
     def __init__(self, llm_service: ILLMService):
         self.llm_service = llm_service
 
+    # ================ NAIVE RAG FULL TEXT ================
+    async def naive_generate(
+        self, query: str,
+        child_nodes: List[ChildNode],
+        temperature: float = 0.0,
+    ) -> str:
+        app_logger.info(f"Trả lời cho query: '{query}'")
+        system_prompt = RAGPromptTemplate.get_system_prompt()
+        user_prompt = RAGPromptTemplate.build_simple_user_prompt(
+            query, child_nodes
+        )
+
+        try:
+            ans = await self.llm_service.generate(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                temperature=temperature,
+            )
+            return "Không có thông tin" if ans is None else ans
+
+        except Exception as e:
+            app_logger(f"Lỗi Generate: {e}")
+
+    # ================ FULL TEXT ================
     async def generate(
         self, query: str,
         parent_nodes: List[ParentNode],
@@ -39,6 +63,7 @@ class RAGGenerator:
         except Exception as e:
             app_logger(f"Lỗi Generate: {e}")
 
+    # ================ TEXT STREAM ================
     async def generate_stream(
         self, query: str,
         parent_nodes: List[ParentNode],

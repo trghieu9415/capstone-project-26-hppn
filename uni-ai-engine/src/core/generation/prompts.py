@@ -1,7 +1,7 @@
 from typing import List, Dict
 from uuid import UUID
 
-from schemas.document import ParentNode
+from schemas.document import ParentNode, ChildNode
 from utils.logger import app_logger
 
 
@@ -45,6 +45,28 @@ class RAGPromptTemplate:
                 f"--- Nguồn {i}: {source_name} ---\n{node.full_text}\n"
             )
 
+        context_string = "\n\n".join(context_parts)
+        return f"""Dựa vào các tài liệu sau đây, hãy trả lời câu hỏi của người dùng.
+            [NGỮ CẢNH]
+            {context_string}
+
+            [CÂU HỎI]
+            {query}
+        """
+
+    @staticmethod
+    def build_simple_user_prompt(
+        query: str,
+        child_nodes: List[ChildNode]
+    ) -> str:
+        if not child_nodes:
+            return f"Câu hỏi: {query}\n\n[NGỮ CẢNH]\nKhông có tài liệu nào liên quan."
+
+        context_parts = []
+        for i, node in enumerate(child_nodes, start=1):
+            context_parts.append(
+                f"--- Nguồn {i} ---\n{node.text_chunk}\n"
+            )
         context_string = "\n\n".join(context_parts)
         return f"""Dựa vào các tài liệu sau đây, hãy trả lời câu hỏi của người dùng.
             [NGỮ CẢNH]

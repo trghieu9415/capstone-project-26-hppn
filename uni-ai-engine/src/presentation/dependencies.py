@@ -3,9 +3,11 @@
 from configs.settings import settings
 from core.generation.generator import RAGGenerator
 from core.ingestion.pipeline import IngestionPipeline
+from core.naive_rag_service import NaiveRAGService
 from core.rag_service import RAGService
 from core.retrieval.hybrid_ranker import HybridRanker
 from core.retrieval.keyword_retriever import KeywordRetriever
+from core.retrieval.model_ranker import CrossEncoderReranker
 from core.retrieval.vector_retriever import VectorRetriever
 
 from infrastructure.storage.postgres_adapter import PostgresDocumentStore, Base
@@ -16,6 +18,8 @@ from infrastructure.llms.gemini_adapter import GeminiService
 
 import sys
 import os
+
+from utils.evaluator import AnswerEvaluator
 
 sys.path.append(os.path.join(os.path.dirname(__file__), 'generated'))
 
@@ -32,20 +36,18 @@ async def init_dependencies():
     await init_db(engine)
     session_factory = async_sessionmaker(bind=engine, expire_on_commit=False)
 
-    # --- B. Khởi tạo Infrastructure Adapters ---
+    # --- B.1 Khởi tạo Infrastructure Store Adapters ---
     doc_store = PostgresDocumentStore(session_factory=session_factory)
-
     vector_store = QdrantAdapter(
         collection_name=settings.QDRANT_COLLECTION,
         vector_size=settings.VECTOR_SIZE,
         url=settings.QDRANT_URL
     )
     await vector_store.initialize()
-
     keyword_store = BM25KeywordStore(persist_dir=settings.KEYWORD_DB_DIR)
 
+    # --- B.2 Khởi tạo Infrastructure Service Adapters ---
     embedding_service = HuggingFaceAdapter(model_name=settings.EMBEDDING_MODEL_NAME)
-
     llm_service = GeminiService(
         api_key=settings.GEMINI_API_KEY,
         model_name=settings.GEMINI_MODEL_NAME
@@ -61,15 +63,31 @@ async def init_dependencies():
 
     vector_retriever = VectorRetriever(vector_store, embedding_service)
     keyword_retriever = KeywordRetriever(keyword_store)
-    ranker = HybridRanker()
+    hybrid_ranker = HybridRanker()
+    cross_encoder_ranker = CrossEncoderReranker()
     generator = RAGGenerator(llm_service)
+    evaluate_on = False
+    evaluator = None
+
+    if evaluate_on:
+        evaluator = AnswerEvaluator()
 
     rag_service = RAGService(
         doc_store=doc_store,
         vector_retriever=vector_retriever,
         keyword_retriever=keyword_retriever,
-        ranker=ranker,
-        generator=generator
+        hybrid_ranker=hybrid_ranker,
+        cross_encoder_ranker=cross_encoder_ranker,
+        generator=generator,
+        evaluate_on=evaluate_on,
+        evaluator=evaluator
     )
 
-    return ingestion_pipeline, rag_service
+    naive_rag_service = NaiveRAGService(
+        vector_retriever=vector_retriever,
+        generator=generator,
+        evaluate_on=evaluate_on,
+        evaluator=evaluator
+    )
+
+    return ingestion_pipeline, rag_service, naive_rag_service

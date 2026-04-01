@@ -40,11 +40,11 @@ def _listen_for_keypress(stop_event):
 async def serve():
     app_logger.info("--- Khởi động UniRAG AI Engine ---")
 
-    ingestion_pipeline, rag_service = await init_dependencies()
+    ingestion_pipeline, rag_service, naive_rag_service = await init_dependencies()
 
     server = grpc.aio.server()
     rag_pb2_grpc.add_RagEngineServiceServicer_to_server(
-        GrpcRagServicer(ingestion_pipeline, rag_service),
+        GrpcRagServicer(ingestion_pipeline, rag_service, naive_rag_service),
         server
     )
 

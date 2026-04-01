@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     # 5. Cấu hình AI & Embedding Model
     # EMBEDDING_MODEL_NAME: str = Field(default="keepitreal/vietnamese-sbert")
     EMBEDDING_MODEL_NAME: str = Field(default="dangvantuan/vietnamese-embedding")
+    CROSS_ENCODER_MODEL_NAME: str = Field(default="BAAI/bge-reranker-v2-m3")
+    NLI_MODEL_NAME: str = Field(default="MoritzLaurer/mDeBERTa-v3-base-mnli-xnli")
+
     VECTOR_SIZE: int = Field(
         default=768,
         description="Kích thước vector của model (sbert là 768)")
