@@ -74,26 +74,22 @@ class IngestionPipeline:
             if not child_nodes:
                 return False
 
-            await self.doc_store.save_parents(parent_nodes)
-            app_logger.info(f"Đã lưu {len(parent_nodes)} đoạn parent vào Postgres.")
-
             texts_to_embed = [node.text_chunk for node in child_nodes]
+            app_logger.info(f"Chuyển đổi texts sang embedding vectors")
             embeddings = await self.embedding_service.embed_batch(texts_to_embed)
 
             for i, node in enumerate(child_nodes):
                 node.embedding = embeddings[i]
 
-            success_v, success_k = await asyncio.gather(
-                self.vector_store.save_children(child_nodes),
-                self.keyword_store.save_children(child_nodes)
-            )
+            await self.vector_store.save_children(child_nodes)
+            app_logger.info(f"{file_name} Nhúng thành công {len(child_nodes)} Nodes.")
+            await self.keyword_store.save_children(child_nodes)
+            app_logger.info(f"Nạp thành công {file_name} vào KeywordStore.")
 
-            if success_v and success_k:
-                app_logger.info(f"==> Hoàn tất nạp tài liệu {file_name} thành công.")
-                return True
+            await self.doc_store.save_parents(parent_nodes)
+            app_logger.info(f"Đã lưu {len(parent_nodes)} đoạn parent vào Postgres.")
 
-            app_logger.error("Lỗi lưu trữ tại VectorStore hoặc KeywordStore.")
-            return False
+            return True
 
         except Exception as e:
             app_logger.error(f"Lỗi Pipeline tại file {file_name}: {e}")

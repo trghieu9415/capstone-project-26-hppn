@@ -1,4 +1,5 @@
 import asyncio
+import os
 from typing import List
 from sentence_transformers import SentenceTransformer
 import torch
@@ -16,7 +17,11 @@ class HuggingFaceAdapter(IEmbeddingService):
 
         app_logger.info(
             f"Đang tải mô hình Embedding: {model_name} trên {device.upper()}...")
-        self.model = SentenceTransformer(model_name, device=device)
+        self.model = SentenceTransformer(
+            model_name,
+            device=device,
+            trust_remote_code=True
+        )
 
     def _encode_sync(self, text: str) -> List[float]:
         return self.model.encode(text).tolist()
@@ -42,18 +47,20 @@ class HuggingFaceAdapter(IEmbeddingService):
             return []
 
     async def embed_batch(self, texts: List[str]) -> List[List[float]]:
-        processed_texts = [f"passage: {t}" for t in texts if t.strip()]
-        if not processed_texts:
-            return []
+        valid_texts = [f"passage: {t}" for t in texts if t and t.strip()]
 
+        if not valid_texts:
+            return []
         try:
-            return await asyncio.to_thread(
-                lambda: self.model.encode(
-                    processed_texts,
-                    batch_size=32,
-                    normalize_embeddings=True
-                ).tolist()
+            result = await asyncio.to_thread(
+                self.model.encode,
+                sentences=valid_texts,
+                batch_size=settings.EMBEDDING_BATCH_SIZE,
+                show_progress_bar=True,
+                convert_to_numpy=True,
+                normalize_embeddings=True
             )
+            return result.tolist()
         except Exception as e:
             app_logger.error(f"Lỗi khi tạo batch embedding: {e}")
             return []
