@@ -106,51 +106,51 @@ export const ChatInterface: React.FC = () => {
         <div className="max-w-4xl mx-auto relative">
           <AnimatePresence>{showFilters && <ContextFilters />}</AnimatePresence>
 
-          <div className="relative group">
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendMessage();
-                }
-              }}
-              placeholder="Nhập câu hỏi về học vụ SGU..."
-              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 pr-32 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none min-h-15 max-h-48 text-sm"
-              rows={1}
-            />
+          <div className="flex relative group">
+            <div className="relative w-full border border-slate-300 rounded-xl bg-white shadow-sm focus-within:ring-2 focus-within:ring-blue-500 transition-all">
+              <textarea
+                // Cấu hình để textarea giới hạn ~5 dòng và cuộn
+                className="w-full resize-none bg-transparent outline-none p-3 pb-14 min-h-[48px] max-h-[120px] overflow-y-auto rounded-xl text-slate-700"
+                placeholder="Nhập tin nhắn..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                // Nếu bro muốn nó tự động co giãn chiều cao khi gõ (auto-resize),
+                // bro có thể tham khảo thư viện 'react-textarea-autosize'.
+                // Còn nếu chỉ dùng HTML thuần thì code này sẽ fix cứng khung hiển thị ở max 5 dòng.
+              />
 
-            <div className="absolute right-2 bottom-2 flex items-center gap-2">
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={cn(
-                  "p-2 rounded-xl transition-all",
-                  showFilters ? "bg-blue-100 text-blue-600" : "text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              {/* Cụm 2 nút của bro giữ nguyên */}
+              <div className="absolute right-2 bottom-2 flex items-center gap-2">
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={cn(
+                    "p-2 rounded-xl transition-all",
+                    showFilters ? "bg-blue-100 text-blue-600" : "text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                  )}
+                  title="Bộ lọc ngữ cảnh"
+                >
+                  <Filter size={20} />
+                </button>
+
+                {isReceiving ? (
+                  <button
+                    onClick={stopStreaming}
+                    className="p-2 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 transition-all shadow-sm shadow-red-100"
+                    title="Dừng trả lời"
+                  >
+                    <Square size={20} fill="currentColor" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={!input.trim()}
+                    className="p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:bg-slate-300 transition-all shadow-lg shadow-blue-200"
+                    title="Gửi tin nhắn"
+                  >
+                    <Send size={20} />
+                  </button>
                 )}
-                title="Bộ lọc ngữ cảnh"
-              >
-                <Filter size={20} />
-              </button>
-
-              {isReceiving ? (
-                <button
-                  onClick={stopStreaming}
-                  className="p-2 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 transition-all shadow-sm shadow-red-100"
-                  title="Dừng trả lời"
-                >
-                  <Square size={20} fill="currentColor" />
-                </button>
-              ) : (
-                <button
-                  onClick={handleSendMessage}
-                  disabled={!input.trim()}
-                  className="p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:bg-slate-300 transition-all shadow-lg shadow-blue-200"
-                  title="Gửi tin nhắn"
-                >
-                  <Send size={20} />
-                </button>
-              )}
+              </div>
             </div>
           </div>
 

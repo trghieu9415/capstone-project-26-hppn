@@ -22,16 +22,7 @@ interface DocumentState {
 }
 
 export const useDocumentStore = create<DocumentState>((set, get) => ({
-  documents: [
-    {
-      id: "d1",
-      name: "Quy che hoc vu SGU 2023",
-      extension: "pdf",
-      createdAt: new Date().toISOString(),
-      folder: { id: "2", name: "Quy chế" },
-      tags: [{ id: "t1", name: "Học vụ" }],
-    },
-  ],
+  documents: [],
   currentDocument: null,
   isUploading: false,
   isLoading: false,
