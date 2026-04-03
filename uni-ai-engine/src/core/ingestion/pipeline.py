@@ -8,7 +8,7 @@ from core.ingestion.loader import DocumentLoader
 from schemas.document import ParentNode, ChildNode
 from infrastructure.storage.base import IDocumentStore, IVectorStore, IKeywordStore
 from infrastructure.embeddings.base import IEmbeddingService
-from utils.logger import app_logger
+from utils.loggers.app_logger import app_logger
 
 
 class IngestionPipeline:
@@ -49,6 +49,7 @@ class IngestionPipeline:
             clean_text = self.loader.load_and_clean(file_bytes, extension)
 
             parent_texts = self._split_text_by_words(clean_text, word_limit=1200)
+            app_logger.info(f"Tài liệu đã cắt thành {len(parent_texts)} đoạn")
 
             parent_nodes: List[ParentNode] = []
             child_nodes: List[ChildNode] = []

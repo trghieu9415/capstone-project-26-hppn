@@ -1,10 +1,11 @@
 from typing import List, Optional
 from uuid import UUID
 
+from configs.settings import settings
 from infrastructure.storage.base import IVectorStore
 from infrastructure.embeddings.base import IEmbeddingService
 from schemas.document import ScoredNode
-from utils.logger import app_logger
+from utils.loggers.app_logger import app_logger
 
 
 class VectorRetriever:
@@ -19,7 +20,7 @@ class VectorRetriever:
     async def retrieve(
         self,
         query: str,
-        top_k: int = 10,
+        top_k: int = settings.VECTOR_SEARCH_TOP_K,
         doc_ids: Optional[List[UUID]] = None
     ) -> List[ScoredNode]:
         try:

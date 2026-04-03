@@ -2,7 +2,7 @@ import io
 from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE_TYPE
 from utils.parsers.base import BaseParser
-from utils.logger import app_logger
+from utils.loggers.app_logger import app_logger
 
 
 class PptxParser(BaseParser):

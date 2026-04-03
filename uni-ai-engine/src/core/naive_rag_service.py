@@ -1,16 +1,11 @@
-﻿import asyncio
-from typing import List, Optional, AsyncGenerator, Dict
+﻿from typing import List, Optional
 from uuid import UUID
 
 from core.generation.generator import RAGGenerator
-from core.retrieval.hybrid_ranker import HybridRanker
-from core.retrieval.model_ranker import CrossEncoderReranker
-from core.retrieval.keyword_retriever import KeywordRetriever
 from core.retrieval.vector_retriever import VectorRetriever
-from infrastructure.storage.base import IDocumentStore
-from schemas.document import ParentNode, ChildNode
+from schemas.document import ChildNode
 from utils.evaluator import AnswerEvaluator
-from utils.logger import app_logger
+from utils.loggers.app_logger import app_logger
 
 
 class NaiveRAGService:
@@ -29,11 +24,10 @@ class NaiveRAGService:
     async def _get_context_nodes(
         self,
         query: str,
-        top_k: int,
         doc_ids: Optional[List[UUID]]
     ) -> List[ChildNode]:
         vector_res = await self.vector_retriever.retrieve(
-            query, top_k=top_k, doc_ids=doc_ids
+            query, doc_ids=doc_ids
         )
 
         if not vector_res:
@@ -47,7 +41,7 @@ class NaiveRAGService:
         doc_ids: Optional[List[UUID]] = None,
         top_k: int = 6
     ) -> str:
-        child_nodes = await self._get_context_nodes(query, top_k, doc_ids)
+        child_nodes = await self._get_context_nodes(query, doc_ids)
         answer = await self.generator.naive_generate(query, child_nodes)
 
         if self.evaluate_on:

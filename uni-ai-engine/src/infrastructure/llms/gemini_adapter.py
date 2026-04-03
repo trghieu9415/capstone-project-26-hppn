@@ -1,9 +1,9 @@
 from google import genai
-from typing import Optional, AsyncGenerator
+from typing import AsyncGenerator
 from google.genai import types
 from infrastructure.llms.base import ILLMService
 from configs.settings import settings
-from utils.logger import app_logger
+from utils.loggers.app_logger import app_logger
 
 
 class GeminiService(ILLMService):

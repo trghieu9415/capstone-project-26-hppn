@@ -8,12 +8,26 @@ class EvaluationLogger:
         self.base_dir = Path(base_dir)
         self.base_dir.mkdir(parents=True, exist_ok=True)
 
-        self.recall_log = self._setup_logger("Recall", "recall_k.txt")
-        self.mrr_log = self._setup_logger("MRR", "mrr_k.txt")
-        self.faith_log = self._setup_logger("Faithfulness", "faithfulness.txt")
-        self.relevance_log = self._setup_logger("AnswerRelevance",
-                                                "answer_relevance.txt")
-        self.latency_log = self._setup_logger("Latency", "latency.txt")
+        self.recall_log = self._setup_logger(
+            "Recall",
+            "recall_k.txt"
+        )
+        self.mrr_log = self._setup_logger(
+            "MRR",
+            "mrr_k.txt"
+        )
+        self.faith_log = self._setup_logger(
+            "Faithfulness",
+            "faithfulness.txt"
+        )
+        self.relevance_log = self._setup_logger(
+            "AnswerRelevance",
+            "answer_relevance.txt"
+        )
+        self.latency_log = self._setup_logger(
+            "Latency",
+            "latency.txt"
+        )
 
     def _setup_logger(self, name: str, filename: str) -> logging.Logger:
         logger = logging.getLogger(f"Eval_{name}")
@@ -69,7 +83,12 @@ class EvaluationLogger:
         }
         self.relevance_log.info(json.dumps(data))
 
-    def log_latency(self, query: str, retrieval_time: float, llm_time: float):
+    def log_latency(
+        self,
+        query: str,
+        retrieval_time: float,
+        llm_time: float
+    ):
         total_time = retrieval_time + llm_time
         data = {
             "query": query[:50],

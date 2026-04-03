@@ -5,7 +5,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from schemas.document import ChildNode
 from configs.settings import settings
-from utils.logger import app_logger
+from utils.loggers.app_logger import app_logger
 
 
 class TextChunker:
@@ -53,5 +53,4 @@ class TextChunker:
             )
             nodes.append(node)
 
-        app_logger.info(f"Đã cắt parent_id {parent_id} thành {len(nodes)} chunks.")
         return nodes

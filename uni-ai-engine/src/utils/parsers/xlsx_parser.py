@@ -1,7 +1,7 @@
 import io
 import pandas as pd
 from utils.parsers.base import BaseParser
-from utils.logger import app_logger
+from utils.loggers.app_logger import app_logger
 
 
 class XlsxParser(BaseParser):

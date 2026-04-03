@@ -8,7 +8,7 @@ import time
 from configs.settings import settings
 from presentation.dependencies import init_dependencies
 from presentation.grpc_servicer import GrpcRagServicer
-from utils.logger import app_logger
+from utils.loggers.app_logger import app_logger
 
 import presentation.generated.rag_service_pb2_grpc as rag_pb2_grpc
 

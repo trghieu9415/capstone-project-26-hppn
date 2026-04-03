@@ -1,6 +1,6 @@
 import io
 from docx import Document
-from utils.logger import app_logger
+from utils.loggers.app_logger import app_logger
 from utils.parsers.base import BaseParser
 
 

@@ -1,10 +1,9 @@
-from typing import List, AsyncGenerator, Optional
-from uuid import UUID
+from typing import List, AsyncGenerator
 
 from schemas.document import ParentNode, ChildNode
 from core.generation.prompts import RAGPromptTemplate
 from infrastructure.llms.base import ILLMService
-from utils.logger import app_logger
+from utils.loggers.app_logger import app_logger
 
 
 class RAGGenerator:

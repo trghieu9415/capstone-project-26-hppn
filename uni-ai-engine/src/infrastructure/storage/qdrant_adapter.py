@@ -1,4 +1,3 @@
-import asyncio
 from typing import List, Optional, Any, cast
 from uuid import UUID
 from qdrant_client import AsyncQdrantClient, models
@@ -6,7 +5,7 @@ from qdrant_client import AsyncQdrantClient, models
 from infrastructure.storage.base import IVectorStore
 from schemas.document import ChildNode, ScoredNode
 from configs.settings import settings
-from utils.logger import app_logger
+from utils.loggers.app_logger import app_logger
 
 
 class QdrantAdapter(IVectorStore):
@@ -91,7 +90,7 @@ class QdrantAdapter(IVectorStore):
     async def search_vector(
         self,
         query_embedding: List[float],
-        top_k: int = 6,
+        top_k: int = settings.VECTOR_SEARCH_TOP_K,
         doc_ids: Optional[List[UUID]] = None,
     ) -> List[ScoredNode]:
 

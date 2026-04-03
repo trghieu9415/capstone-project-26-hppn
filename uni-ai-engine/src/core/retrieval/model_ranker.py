@@ -7,41 +7,7 @@ from sentence_transformers import CrossEncoder
 
 from configs.settings import settings
 from schemas.document import ScoredNode
-from utils.logger import app_logger
-
-
-def _log_rerank_report(
-    initial_results: List[ScoredNode],
-    final_items: List[Dict[str, Any]]
-):
-    try:
-        log_dir = "logs/rerank"
-        os.makedirs(log_dir, exist_ok=True)
-        timestamp_date = datetime.datetime.now().strftime("%Y%m%d")
-        file_path = f"{log_dir}/rerank_{timestamp_date}.txt"
-
-        with open(file_path, "a", encoding="utf-8") as f:
-            current_time = datetime.datetime.now().strftime("%H:%M:%S")
-            f.write(f"\n\n==================================================\n")
-            f.write(f"=== CROSS-ENCODER RERANK REPORT - {current_time} ===\n")
-            f.write(f"==================================================\n\n")
-
-            f.write(
-                f"--- [1] INITIAL HYBRID RESULTS (Total: {len(initial_results)}) ---\n")
-            for i, r in enumerate(initial_results[:10]):
-                short_text = r.node.text_chunk[:100].replace("\n", " ")
-                f.write(
-                    f"Input Rank {i + 1} | Base Score={r.score:.5f}: ID={r.node.id} | Content:{short_text}...\n")
-
-            f.write(
-                f"\n--- [2] FINAL CROSS-ENCODER RESULTS (TOP {len(final_items)}) ---\n")
-            for i, item in enumerate(final_items):
-                short_text = item['node'].text_chunk[:100].replace("\n", " ")
-                f.write(
-                    f"Final Rank {i + 1} | CE Score={item['cross_score']:.5f} | Original Rank={item['original_rank']} | Content={short_text}...\n")
-
-    except Exception as e:
-        app_logger.warning(f"Lỗi ghi log rerank: {e}")
+from utils.loggers.app_logger import app_logger
 
 
 class CrossEncoderReranker:
@@ -54,7 +20,7 @@ class CrossEncoderReranker:
         self,
         query: str,
         results: List[ScoredNode],
-        top_k: int = 6
+        top_k: int = settings.CROSS_ENCODER_TOP_K,
     ) -> List[ScoredNode]:
 
         if not results:
@@ -85,8 +51,6 @@ class CrossEncoderReranker:
 
         candidate_items.sort(key=lambda x: x["cross_score"], reverse=True)
         top_items = candidate_items[:top_k]
-
-        _log_rerank_report(results, top_items)
 
         final_nodes = [
             ScoredNode(node=item["node"], score=item["cross_score"])

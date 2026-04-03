@@ -1,6 +1,6 @@
 import fitz
 from utils.parsers.base import BaseParser
-from utils.logger import app_logger
+from utils.loggers.app_logger import app_logger
 
 
 class PdfParser(BaseParser):

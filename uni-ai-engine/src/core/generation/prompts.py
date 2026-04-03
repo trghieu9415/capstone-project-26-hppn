@@ -2,7 +2,6 @@ from typing import List, Dict
 from uuid import UUID
 
 from schemas.document import ParentNode, ChildNode
-from utils.logger import app_logger
 
 
 class RAGPromptTemplate:

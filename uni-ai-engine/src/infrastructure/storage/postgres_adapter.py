@@ -6,11 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import select, delete
 from sqlalchemy.dialects.postgresql import insert
-from torch.ao.ns.fx import mappings
 
 from infrastructure.storage.base import IDocumentStore
 from schemas.document import ParentNode
-from utils.logger import app_logger
+from utils.loggers.app_logger import app_logger
 
 
 class Base(DeclarativeBase):
@@ -120,7 +119,8 @@ class PostgresDocumentStore(IDocumentStore):
                     select(
                         ParentDocumentModel.id,
                         DocumentModel.name,
-                        DocumentModel.extension
+                        DocumentModel.extension,
+                        ParentDocumentModel.extra_data["chunk_index"]
                     )
                     .join(DocumentModel, ParentDocumentModel.doc_id == DocumentModel.id)
                     .where(ParentDocumentModel.id.in_(parent_ids))
@@ -129,7 +129,12 @@ class PostgresDocumentStore(IDocumentStore):
 
                 result = await session.execute(stmt)
                 records = result.all()
-                app_logger.info(f"Danh sách doc_names: {records}")
+
+                formatted_records = "\n".join(
+                    f"  + Parent ID: {r[0]} | Tên file: {r[1]}{r[2]} | Chunk: {3}"
+                    for r in records
+                )
+                app_logger.info(f"Danh sách Tài liệu được chọn:\n{formatted_records}")
 
                 return {record.id: f"{record.name}{record.extension}"
                         for record in records}

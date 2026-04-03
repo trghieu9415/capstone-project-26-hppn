@@ -6,13 +6,14 @@ from uuid import UUID
 from rank_bm25 import BM25Okapi
 from pyvi import ViTokenizer
 
+from configs.settings import settings
 from infrastructure.storage.base import IKeywordStore
 from schemas.document import ChildNode, ScoredNode
-from utils.logger import app_logger
+from utils.loggers.app_logger import app_logger
 
 
 class BM25KeywordStore(IKeywordStore):
-    def __init__(self, persist_dir: str = "../data/keyword_db"):
+    def __init__(self, persist_dir: str = settings.KEYWORD_DB_DIR):
         self.persist_dir = persist_dir
         self.index_path = os.path.join(self.persist_dir, "bm25_nodes.pkl")
 
@@ -73,7 +74,7 @@ class BM25KeywordStore(IKeywordStore):
     async def search_keyword(
         self,
         query: str,
-        top_k: int = 6,
+        top_k: int = settings.KEYWORD_SEARCH_TOP_K,
         doc_ids: Optional[List[UUID]] = None,
     ) -> List[ScoredNode]:
 

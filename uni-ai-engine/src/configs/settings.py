@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     QDRANT_COLLECTION: str = Field(default="document_chunks")
 
     # Cấu hình Keyword DB (BM25)
-    KEYWORD_DB_DIR: str = Field(default="../data/keyword_db")
+    KEYWORD_DB_DIR: str = Field(default="data/keyword_db")
 
     # EMBEDDING_MODEL_NAME: str = Field(default="keepitreal/vietnamese-sbert")
     # EMBEDDING_MODEL_NAME: str = Field(default="dangvantuan/vietnamese-embedding")
@@ -35,6 +35,12 @@ class Settings(BaseSettings):
 
     GEMINI_API_KEY: str = Field(default="your_gemini_api_key_here")
     GEMINI_MODEL_NAME: str = Field(default="gemini-2.5-flash-lite")
+
+    # TOP-K
+    VECTOR_SEARCH_TOP_K: int = Field(default=15)
+    KEYWORD_SEARCH_TOP_K: int = Field(default=15)
+    ALPHA_BLENDING_TOP_K: int = Field(default=10)
+    CROSS_ENCODER_TOP_K: int = Field(default=6)
 
     # Đọc từ file .env
     model_config = SettingsConfigDict(

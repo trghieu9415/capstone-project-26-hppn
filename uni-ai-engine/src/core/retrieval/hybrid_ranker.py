@@ -2,46 +2,11 @@
 import os
 from typing import List, Dict, Any
 from uuid import UUID
+
+from configs.settings import settings
 from schemas.document import ScoredNode
-from utils.logger import app_logger
-
-
-def _log_rerank_report(
-    v_res: List[ScoredNode], k_res: List[ScoredNode],
-    final_items: List[Dict[str, Any]]):
-    try:
-        log_dir = "logs/rerank"
-        os.makedirs(log_dir, exist_ok=True)
-        timestamp_date = datetime.datetime.now().strftime("%Y%m%d")
-        file_path = f"{log_dir}/rerank_{timestamp_date}.txt"
-
-        with open(file_path, "a", encoding="utf-8") as f:
-            current_time = datetime.datetime.now().strftime("%H:%M:%S")
-            f.write(f"\n\n==================================================\n")
-            f.write(f"=== ALPHA BLENDING RERANK REPORT - {current_time} ===\n")
-            f.write(f"==================================================\n\n")
-
-            f.write(f"--- [1] TOP VECTOR RESULTS ({len(v_res)}) ---\n")
-            for i, r in enumerate(v_res[:5]):
-                short_text = r.node.text_chunk[:100].replace("\n", " ")
-                f.write(
-                    f"Score={r.score:.5f}: ID={r.node.metadata["file_name"]} | Content:{short_text}...\n")
-
-            f.write(f"\n--- [2] TOP KEYWORD RESULTS ({len(k_res)}) ---\n")
-            for i, r in enumerate(k_res[:5]):
-                short_text = r.node.text_chunk[:100].replace("\n", " ")
-                f.write(
-                    f"Score={r.score:.5f}: ID={r.node.metadata["file_name"]} | Content={short_text}...\n")
-
-            f.write(
-                f"\n--- [3] FINAL ALPHA BLENDING RESULTS (TOP {len(final_items)}) ---\n")
-            for i, item in enumerate(final_items):
-                short_text = item['node'].text_chunk[:100].replace("\n", " ")
-                f.write(
-                    f"Rank {i + 1} | Final={item['final_score']:.5f} (V:{item['v_score']:.3f}, K:{item['k_score']:.3f}) | Sources={item['sources']} | Content={short_text}...\n")
-
-    except Exception as e:
-        app_logger.warning(f"Lỗi ghi log rerank: {e}")
+from utils.loggers.app_logger import app_logger
+from utils.loggers.retrieval_logger import retrieval_logger
 
 
 class HybridRanker:
@@ -73,7 +38,7 @@ class HybridRanker:
         self,
         vector_results: List[ScoredNode],
         keyword_results: List[ScoredNode],
-        top_k: int = 10
+        top_k: int = settings.ALPHA_BLENDING_TOP_K
     ) -> List[ScoredNode]:
 
         norm_vector = self._normalize_scores(vector_results)
@@ -114,8 +79,6 @@ class HybridRanker:
             ScoredNode(node=item["node"], score=item["final_score"])
             for item in top_items
         ]
-
-        _log_rerank_report(vector_results, keyword_results, top_items)
 
         app_logger.info(
             f"-> Rerank (Alpha Blending) thành công: {len(final_nodes)} kết quả.")

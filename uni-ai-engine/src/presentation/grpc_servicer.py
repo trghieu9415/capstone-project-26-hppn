@@ -6,7 +6,7 @@ import presentation.generated.rag_service_pb2_grpc as rag_pb2_grpc
 from core.ingestion.pipeline import IngestionPipeline
 from core.naive_rag_service import NaiveRAGService
 from core.rag_service import RAGService
-from utils.logger import app_logger
+from utils.loggers.app_logger import app_logger
 
 
 class GrpcRagServicer(rag_pb2_grpc.RagEngineServiceServicer):
