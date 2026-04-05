@@ -5,16 +5,19 @@ import { useTagStore } from "@/stores/useTagStore";
 import { useUIStore } from "@/stores/useUIStore";
 import { TagDTO } from "@/types/tag";
 import { cn } from "@/lib/utils";
+import { useDocumentStore } from "@/stores/useDocumentStore";
 
 export const DocumentManager: React.FC = () => {
   const { folders, fetchFolders } = useFolderStore();
   const { tags, fetchTags } = useTagStore();
+	const { fetchDocuments } = useDocumentStore();
   const { openDialog } = useUIStore();
 
   useEffect(() => {
     fetchFolders();
     fetchTags();
-  }, [fetchFolders, fetchTags]);
+		fetchDocuments();
+  }, [fetchDocuments, fetchFolders, fetchTags]);
 
   // Chỉ lấy những phần tử là tài liệu
   const documents = folders.filter((f) => f.type === "DOCUMENT");
