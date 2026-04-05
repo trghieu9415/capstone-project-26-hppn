@@ -20,6 +20,13 @@ export const ChatInterface: React.FC = () => {
     askQuestion({ question: input, docIds: filters.docIds, folderIds: filters.folderIds, tagIds: filters.tagIds });
   };
 
+	const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault(); 
+    handleSendMessage();
+  }
+};
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -109,17 +116,13 @@ export const ChatInterface: React.FC = () => {
           <div className="flex relative group">
             <div className="relative w-full border border-slate-300 rounded-xl bg-white shadow-sm focus-within:ring-2 focus-within:ring-blue-500 transition-all">
               <textarea
-                // Cấu hình để textarea giới hạn ~5 dòng và cuộn
-                className="w-full resize-none bg-transparent outline-none p-3 pb-14 min-h-[48px] max-h-[120px] overflow-y-auto rounded-xl text-slate-700"
+                className="w-full resize-none bg-transparent outline-none p-3 pb-14 min-h-12 max-h-30 overflow-y-auto rounded-xl text-slate-700"
                 placeholder="Nhập tin nhắn..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                // Nếu bro muốn nó tự động co giãn chiều cao khi gõ (auto-resize),
-                // bro có thể tham khảo thư viện 'react-textarea-autosize'.
-                // Còn nếu chỉ dùng HTML thuần thì code này sẽ fix cứng khung hiển thị ở max 5 dòng.
+								onKeyDown={handleKeyDown}
               />
 
-              {/* Cụm 2 nút của bro giữ nguyên */}
               <div className="absolute right-2 bottom-2 flex items-center gap-2">
                 <button
                   onClick={() => setShowFilters(!showFilters)}
