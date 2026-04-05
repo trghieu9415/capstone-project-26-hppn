@@ -78,7 +78,7 @@ class GrpcRagServicer(rag_pb2_grpc.RagEngineServiceServicer):
 
             app_logger.info(f"Nhận truy vấn RAG: {request.question}")
 
-            answer = await self.rag_service.answer_question(
+            answer = await self.naive_rag_service.answer_question(
                 query=request.question,
                 doc_ids=doc_ids
             )

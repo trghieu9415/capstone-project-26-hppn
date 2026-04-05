@@ -14,6 +14,7 @@ class CrossEncoderReranker:
     def __init__(self, model_name: str = settings.CROSS_ENCODER_MODEL_NAME):
         app_logger.info(f"Đang tải mô hình Cross-Encoder: {model_name}...")
         self.model = CrossEncoder(model_name, max_length=512)
+        app_logger.info(f"Mô hình đang chạy trên thiết bị: {self.model.model.device}")
         app_logger.info("Cross-Encoder đã sẵn sàng!")
 
     def rerank(

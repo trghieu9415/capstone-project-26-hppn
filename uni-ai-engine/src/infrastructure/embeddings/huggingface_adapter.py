@@ -22,22 +22,14 @@ class HuggingFaceAdapter(IEmbeddingService):
             trust_remote_code=True
         )
 
-    def _encode_sync(self, text: str) -> List[float]:
-        return self.model.encode(text).tolist()
-
-    def _encode_batch_sync(self, texts: List[str]) -> List[List[float]]:
-        return self.model.encode(texts).tolist()
-
     async def embed_text(self, text: str, is_query: bool = False) -> List[float]:
         if not text or not text.strip():
             return []
 
-        processed_text = f"query: {text}" if is_query else f"passage: {text}"
-
         try:
             return await asyncio.to_thread(
                 lambda: self.model.encode(
-                    processed_text,
+                    text,
                     normalize_embeddings=True
                 ).tolist()
             )
@@ -46,14 +38,12 @@ class HuggingFaceAdapter(IEmbeddingService):
             return []
 
     async def embed_batch(self, texts: List[str]) -> List[List[float]]:
-        valid_texts = [f"passage: {t}" for t in texts if t and t.strip()]
-
-        if not valid_texts:
+        if not texts:
             return []
         try:
             result = await asyncio.to_thread(
                 self.model.encode,
-                sentences=valid_texts,
+                sentences=texts,
                 batch_size=settings.EMBEDDING_BATCH_SIZE,
                 show_progress_bar=True,
                 convert_to_numpy=True,

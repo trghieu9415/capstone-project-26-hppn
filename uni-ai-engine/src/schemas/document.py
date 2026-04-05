@@ -14,6 +14,7 @@ class ParentNode(BaseNode):
 
 
 class ChildNode(BaseNode):
+    doc_id: UUID
     parent_id: UUID
     chunk_index: int
     text_chunk: str

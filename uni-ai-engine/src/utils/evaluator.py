@@ -1,8 +1,11 @@
-﻿import math
+﻿import asyncio
+import math
+import re
 from dataclasses import dataclass
 from typing import List
 
-from sentence_transformers import CrossEncoder
+import torch
+from sentence_transformers import CrossEncoder, SentenceTransformer, util
 from transformers import pipeline
 
 from configs.settings import settings
@@ -18,10 +21,10 @@ class AnswerQualityMetrics:
 class AnswerEvaluator:
     def __init__(
         self,
-        encoder_model_name: str = settings.CROSS_ENCODER_MODEL_NAME,
+        relevance_model: SentenceTransformer,
         nli_model_name: str = settings.NLI_MODEL_NAME,
     ):
-        self.relevance_model = CrossEncoder(encoder_model_name, max_length=512)
+        self.relevance_model = relevance_model
         self.faithfulness_model = pipeline(
             "text-classification",
             model=nli_model_name,
@@ -29,40 +32,74 @@ class AnswerEvaluator:
             max_length=512
         )
 
-    @staticmethod
-    def _sigmoid(x: float) -> float:
-        try:
-            return 1 / (1 + math.exp(-x))
-        except OverflowError:
-            return 0.0 if x < 0 else 1.0
+    async def evaluate_relevance(self, query: str, answer: str) -> float:
+        def _get_similarity():
+            embeddings = self.relevance_model.encode(
+                [query, answer],
+                normalize_embeddings=True,
+                convert_to_tensor=True
+            )
 
-    def evaluate_relevance(self, query: str, answer: str) -> float:
-        sentence_pair = [[query, answer]]
-        raw_score = self.relevance_model.predict(sentence_pair)[0]
-        relevance_score = self._sigmoid(float(raw_score))
-        return relevance_score
+            cos_sim = util.cos_sim(embeddings[0], embeddings[1])
+            return float(cos_sim.item())
 
-    def evaluate_faithfulness(self, context: List[BaseNode], answer: str) -> float:
-        text_context = ""
-        if context and isinstance(context[0], ParentNode):
-            text_context = "\n\n".join(parent.full_text for parent in context)
-        elif context and isinstance(context[0], ChildNode):
-            text_context = "\n\n".join(child.text_chunk for child in context)
+        return await asyncio.to_thread(_get_similarity)
 
-        results = self.faithfulness_model({
-            "text": text_context,
-            "text_pair": answer
-        }, top_k=None)
+    async def evaluate_faithfulness(
+        self, context: List[BaseNode],
+        answer: str
+    ) -> float:
+        if not context:
+            return 0.0
 
-        return next(
-            (item['score'] for item in results if item['label'] == 'entailment'),
-            0.0
-        )
+        clean_answer = answer.replace("Dựa trên thông tin được cung cấp:", "").strip()
+        clean_answer = re.sub(r'---\s*\[Nguồn: .*?\]\s*---', '', clean_answer).strip()
 
-    def evaluate_answer(
+        def _run_nli():
+            sentences = [s.strip() for s in clean_answer.split('\n') if s.strip()]
+            if not sentences: return 0.0
+
+            total_entailment = 0.0
+
+            for sentence in sentences:
+                sentence_max_score = 0.0
+
+                for chunk in context:
+                    raw_text = chunk.full_text if isinstance(
+                        chunk,
+                        ParentNode
+                    ) else chunk.text_chunk
+
+                    mini_chunks = [raw_text[i:i + 1000] for i in
+                                   range(0, len(raw_text), 800)]
+
+                    for mini_text in mini_chunks:
+                        result = self.faithfulness_model(
+                            {"text": mini_text, "text_pair": sentence},
+                            top_k=None,
+                            truncation="only_first"
+                        )
+
+                        entail_score = next(
+                            (item['score'] for item in result if
+                             item['label'].lower() == 'entailment'),
+                            0.0
+                        )
+
+                        sentence_max_score = max(sentence_max_score, entail_score)
+                total_entailment += sentence_max_score
+            return total_entailment / len(sentences)
+
+        return await asyncio.to_thread(_run_nli)
+
+    async def evaluate_answer(
         self, query: str, answer: str,
         context: List[BaseNode]
     ) -> AnswerQualityMetrics:
-        relevance_score = self.evaluate_relevance(query, answer)
-        faithfulness_score = self.evaluate_faithfulness(context, answer)
-        return AnswerQualityMetrics(relevance_score, faithfulness_score)
+        relevance_score = await self.evaluate_relevance(query, answer)
+        faithfulness_score = await self.evaluate_faithfulness(context, answer)
+
+        return AnswerQualityMetrics(
+            relevance=relevance_score,
+            faithfulness=faithfulness_score
+        )

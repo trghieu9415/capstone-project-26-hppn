@@ -26,7 +26,7 @@ class QdrantAdapter(IVectorStore):
             collection_names = [c.name for c in collections_response.collections]
 
             if self.collection_name not in collection_names:
-                app_logger.info(f"🚀 Đang tạo Qdrant collection: {self.collection_name}")
+                app_logger.info(f"Đang tạo Qdrant collection: {self.collection_name}")
                 await self.client.create_collection(
                     collection_name=self.collection_name,
                     vectors_config=models.VectorParams(
@@ -62,13 +62,12 @@ class QdrantAdapter(IVectorStore):
                 app_logger.warning(f"Node {node.id} thiếu embedding, bỏ qua.")
                 continue
 
-            doc_id = node.metadata.get("doc_id")
             points.append(
                 models.PointStruct(
                     id=str(node.id),
                     vector=node.embedding,
                     payload={
-                        "doc_id": str(doc_id) if doc_id else None,
+                        "doc_id": node.doc_id,
                         "parent_id": str(node.parent_id),
                         "chunk_index": node.chunk_index,
                         "text_chunk": node.text_chunk,
@@ -120,6 +119,7 @@ class QdrantAdapter(IVectorStore):
                 payload = hit.payload or {}
                 child = ChildNode(
                     id=UUID(str(hit.id)),
+                    doc_id=UUID(payload.get("doc_id")),
                     parent_id=UUID(payload.get("parent_id")),
                     chunk_index=payload.get("chunk_index", 0),
                     text_chunk=payload.get("text_chunk", ""),
@@ -171,5 +171,5 @@ class QdrantAdapter(IVectorStore):
             )
             return True
         except Exception as e:
-            app_logger.error(f"❌ Lỗi khi xóa vectors theo doc_id: {e}")
+            app_logger.error(f"Lỗi khi xóa vectors theo doc_id: {e}")
             return False

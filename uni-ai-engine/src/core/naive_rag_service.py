@@ -6,6 +6,7 @@ from core.retrieval.vector_retriever import VectorRetriever
 from schemas.document import ChildNode
 from utils.evaluator import AnswerEvaluator
 from utils.loggers.app_logger import app_logger
+from utils.loggers.retrieval_logger import retrieval_logger
 
 
 class NaiveRAGService:
@@ -30,6 +31,8 @@ class NaiveRAGService:
             query, doc_ids=doc_ids
         )
 
+        retrieval_logger.log_vector_search(query, vector_res)
+
         if not vector_res:
             return []
 
@@ -45,7 +48,7 @@ class NaiveRAGService:
         answer = await self.generator.naive_generate(query, child_nodes)
 
         if self.evaluate_on:
-            results = self.evaluator.evaluate_answer(query, answer, child_nodes)
+            results = await self.evaluator.evaluate_answer(query, answer, child_nodes)
             app_logger.info(
                 f"Faithfulness: {results.faithfulness} - Relevance: {results.relevance}"
             )

@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 from uuid import UUID
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from schemas.document import ChildNode
+from schemas.document import ChildNode, ParentNode
 from configs.settings import settings
 from utils.loggers.app_logger import app_logger
 
@@ -29,13 +29,13 @@ class TextChunker:
 
     def split_into_nodes(
         self,
-        text: str,
-        parent_id: UUID,
+        parent_node: ParentNode,
         metadata: Dict[str, Any] = None
     ) -> List[ChildNode]:
+        text = parent_node.full_text
         if not text or not text.strip():
             app_logger.warning(
-                f"Text rỗng được gửi tới chunker cho parent_id: {parent_id}")
+                f"Text rỗng được gửi tới chunker cho parent_id: {parent_node.id}")
             return []
 
         chunks = self.splitter.split_text(text)
@@ -46,7 +46,8 @@ class TextChunker:
         for idx, chunk_text in enumerate(chunks):
             node = ChildNode(
                 id=uuid.uuid4(),
-                parent_id=parent_id,
+                doc_id=parent_node.doc_id,
+                parent_id=parent_node.id,
                 chunk_index=idx,
                 text_chunk=chunk_text,
                 metadata=metadata.copy()

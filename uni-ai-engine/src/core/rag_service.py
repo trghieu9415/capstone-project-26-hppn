@@ -86,7 +86,7 @@ class RAGService:
         )
 
         if self.evaluate_on:
-            results = self.evaluator.evaluate_answer(query, answer, parent_nodes)
+            results = await self.evaluator.evaluate_answer(query, answer, parent_nodes)
             app_logger.info(
                 f"Faithfulness: {results.faithfulness} - Relevance: {results.relevance}"
             )

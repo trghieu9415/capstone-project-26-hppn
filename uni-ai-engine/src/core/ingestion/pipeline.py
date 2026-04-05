@@ -45,7 +45,8 @@ class IngestionPipeline:
         metadata["file_name"] = file_name
 
         try:
-            app_logger.info(f"==> Bắt đầu nạp tài liệu [ID: {doc_id}]")
+            app_logger.info(
+                f"==> Bắt đầu nạp tài liệu {file_name}{extension} [ID: {doc_id}]")
             clean_text = self.loader.load_and_clean(file_bytes, extension)
 
             parent_texts = self._split_text_by_words(clean_text, word_limit=1200)
@@ -66,8 +67,7 @@ class IngestionPipeline:
                 parent_nodes.append(p_node)
 
                 children = self.chunker.split_into_nodes(
-                    text=p_text,
-                    parent_id=parent_chunk_id,
+                    parent_node=p_node,
                     metadata=p_node.metadata
                 )
                 child_nodes.extend(children)
@@ -90,10 +90,11 @@ class IngestionPipeline:
             await self.doc_store.save_parents(parent_nodes)
             app_logger.info(f"Đã lưu {len(parent_nodes)} đoạn parent vào Postgres.")
 
+            app_logger.info(f"==> Lưu thành công {file_name}{extension}.")
             return True
 
         except Exception as e:
-            app_logger.error(f"Lỗi Pipeline tại file {file_name}: {e}")
+            app_logger.error(f"Lỗi Pipeline tại file {file_name}{extension}: {e}")
             return False
 
     async def delete_document(self, doc_id: UUID) -> bool:

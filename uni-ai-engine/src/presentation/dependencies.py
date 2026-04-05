@@ -66,11 +66,11 @@ async def init_dependencies():
     hybrid_ranker = HybridRanker()
     cross_encoder_ranker = CrossEncoderReranker()
     generator = RAGGenerator(llm_service)
-    evaluate_on = False
+    evaluate_on = True
     evaluator = None
 
     if evaluate_on:
-        evaluator = AnswerEvaluator()
+        evaluator = AnswerEvaluator(embedding_service.model)
 
     rag_service = RAGService(
         doc_store=doc_store,

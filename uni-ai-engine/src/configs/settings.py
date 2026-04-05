@@ -22,10 +22,11 @@ class Settings(BaseSettings):
 
     # EMBEDDING_MODEL_NAME: str = Field(default="keepitreal/vietnamese-sbert")
     # EMBEDDING_MODEL_NAME: str = Field(default="dangvantuan/vietnamese-embedding")
+    # EMBEDDING_MODEL_NAME: str = Field(default="AITeamVN/Vietnamese_Embedding")
     EMBEDDING_MODEL_NAME: str = Field(
         default="dangvantuan/vietnamese-document-embedding")
     EMBEDDING_BATCH_SIZE: int = Field(default=64)
-    CHUNK_SIZE: int = Field(default=512)
+    CHUNK_SIZE: int = Field(default=256)
     CHUNK_OVERLAP: int = Field(default=50)
 
     CROSS_ENCODER_MODEL_NAME: str = Field(default="BAAI/bge-reranker-v2-m3")

@@ -131,7 +131,7 @@ class PostgresDocumentStore(IDocumentStore):
                 records = result.all()
 
                 formatted_records = "\n".join(
-                    f"  + Parent ID: {r[0]} | Tên file: {r[1]}{r[2]} | Chunk: {3}"
+                    f"  + Parent ID: {r[0]} | Tên file: {r[1]}{r[2]} | Chunk: {r[3]}"
                     for r in records
                 )
                 app_logger.info(f"Danh sách Tài liệu được chọn:\n{formatted_records}")

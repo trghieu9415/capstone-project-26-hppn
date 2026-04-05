@@ -92,8 +92,7 @@ class BM25KeywordStore(IKeywordStore):
                 doc_ids_set = set(doc_ids)
                 scored_nodes = [
                     (node, score) for node, score in scored_nodes
-                    if node.parent_id in doc_ids_set
-                       or node.metadata.get("doc_id") in doc_ids_set
+                    if node.doc_id in doc_ids_set
                 ]
 
             scored_nodes = [x for x in scored_nodes if x[1] > 0]

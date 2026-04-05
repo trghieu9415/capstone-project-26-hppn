@@ -51,12 +51,12 @@ class RAGGenerator:
         )
 
         try:
-            # ans = await self.llm_service.generate(
-            #     system_prompt=system_prompt,
-            #     user_prompt=user_prompt,
-            #     temperature=temperature,
-            # )
-            ans = "ĐANG TRONG QUÁ TRÌNH ĐÁNH GIÁ, ĐÂY SẼ LUÔN LÀ CÂU TRẢ LỜI MẶC ĐỊNH"
+            ans = await self.llm_service.generate(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                temperature=temperature,
+            )
+            # ans = "Tôi sẽ tạm không trả lời câu hỏi của bạn để đánh giá"
             return "Không có thông tin" if ans is None else ans
 
 
