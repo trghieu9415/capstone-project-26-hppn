@@ -9,7 +9,7 @@ services:
 
   postgres:
     image: postgres:17-alpine
-    container_name: "document_db"
+    container_name: "document_db" 
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password

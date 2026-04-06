@@ -63,7 +63,9 @@ public class RagGrpcClientImpl implements RagGrpcClient {
             }
         };
 
-        StreamObserver<UploadRequest> requestObserver = asyncStub.uploadDocument(responseObserver);
+        StreamObserver<UploadRequest> requestObserver = asyncStub
+            .withDeadlineAfter(7, TimeUnit.MINUTES)
+            .uploadDocument(responseObserver);
 
         try {
             String docIdStr = docId.toString();
@@ -84,8 +86,9 @@ public class RagGrpcClientImpl implements RagGrpcClient {
             }
 
             requestObserver.onCompleted();
-            if (!finishLatch.await(1, TimeUnit.MINUTES)) {
-                throw new RuntimeException("Timeout waiting for AI Engine");
+
+            if (!finishLatch.await(7, TimeUnit.MINUTES)) {
+                throw new RuntimeException("Timeout waiting for AI Engine (Quá 7 phút)");
             }
 
             if (errorRef.get() != null) {
