@@ -1,6 +1,7 @@
 from typing import List, Optional, Any, cast
 from uuid import UUID
 from qdrant_client import AsyncQdrantClient, models
+from qdrant_client.http.models import KeywordIndexType
 
 from infrastructure.storage.base import IVectorStore
 from schemas.document import ChildNode, ScoredNode
@@ -11,8 +12,8 @@ from utils.loggers.app_logger import app_logger
 class QdrantAdapter(IVectorStore):
     def __init__(
         self,
-        collection_name: str = "document_chunks",
-        vector_size: int = 768,
+        collection_name: str = settings.QDRANT_COLLECTION,
+        vector_size: int = settings.VECTOR_SIZE,
         url: str = settings.QDRANT_URL,
         api_key: Optional[str] = settings.QDRANT_API_KEY,
     ):
@@ -44,9 +45,13 @@ class QdrantAdapter(IVectorStore):
                 await self.client.create_payload_index(
                     collection_name=self.collection_name,
                     field_name="doc_id",
-                    field_schema=models.PayloadSchemaType.KEYWORD,
+                    field_schema=models.KeywordIndexParams(
+                        type=KeywordIndexType.KEYWORD,
+                        is_tenant=True
+                    ),
                 )
-                app_logger.info("Đã khởi tạo Qdrant và các Payload Indexes.")
+                app_logger.info(
+                    "Đã khởi tạo Qdrant và các Payload Indexes phân nhánh (Tenant).")
         except Exception as e:
             app_logger.error(f"Lỗi khi khởi tạo Qdrant: {e}")
             raise e

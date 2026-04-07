@@ -26,13 +26,14 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL_NAME: str = Field(
         default="dangvantuan/vietnamese-document-embedding")
     EMBEDDING_BATCH_SIZE: int = Field(default=64)
-    CHUNK_SIZE: int = Field(default=256)
-    CHUNK_OVERLAP: int = Field(default=50)
+    CHUNK_SIZE: int = Field(default=512)
+    CHUNK_OVERLAP: int = Field(default=100)
+    VECTOR_SIZE: int = Field(default=768)
 
+    ALPHA_WEIGHT: float = Field(default=0.35)
     CROSS_ENCODER_MODEL_NAME: str = Field(default="BAAI/bge-reranker-v2-m3")
     NLI_MODEL_NAME: str = Field(default="MoritzLaurer/mDeBERTa-v3-base-mnli-xnli")
-
-    VECTOR_SIZE: int = Field(default=768)
+    EVALUATE_ON: bool = Field(default=False)
 
     GEMINI_API_KEY: str = Field(default="your_gemini_api_key_here")
     GEMINI_MODEL_NAME: str = Field(default="gemini-2.5-flash-lite")

@@ -66,7 +66,7 @@ async def init_dependencies():
     hybrid_ranker = HybridRanker()
     cross_encoder_ranker = CrossEncoderReranker()
     generator = RAGGenerator(llm_service)
-    evaluate_on = True
+    evaluate_on = settings.EVALUATE_ON
     evaluator = None
 
     if evaluate_on:

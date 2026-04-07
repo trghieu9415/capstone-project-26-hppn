@@ -23,8 +23,7 @@ class RAGPromptTemplate:
                 },
                 "fallback_logic": {
                   "condition": "Nếu [NGỮ CẢNH] không chứa thông tin",
-                  "step_1": "Bắt buộc thông báo: 'Tài liệu hiện tại không chứa thông tin để trả lời câu hỏi này.'",
-                  "step_2": "Hỗ trợ bằng kiến thức nền bằng cách mở đầu: 'Tuy nhiên, theo kiến thức chung (chỉ mang tính tham khảo): ...'"
+                  "action": "Bắt buộc thông báo: 'Tài liệu hiện tại không chứa thông tin để trả lời câu hỏi này.'",
                 },
                 "output_format": {
                   "style": "Markdown (Bullet points, Bold keywords, Tables)",

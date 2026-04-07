@@ -1,5 +1,7 @@
 import asyncio
 from typing import List
+
+from pyvi import ViTokenizer
 from sentence_transformers import SentenceTransformer
 import torch
 
@@ -26,6 +28,7 @@ class HuggingFaceAdapter(IEmbeddingService):
         if not text or not text.strip():
             return []
 
+        # segmented_text = ViTokenizer.tokenize(text)
         try:
             return await asyncio.to_thread(
                 lambda: self.model.encode(
@@ -40,6 +43,8 @@ class HuggingFaceAdapter(IEmbeddingService):
     async def embed_batch(self, texts: List[str]) -> List[List[float]]:
         if not texts:
             return []
+
+        # tokenized_texts = list(map(ViTokenizer.tokenize, texts))
         try:
             result = await asyncio.to_thread(
                 self.model.encode,

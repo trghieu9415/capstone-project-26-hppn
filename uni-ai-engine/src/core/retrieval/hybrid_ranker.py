@@ -10,7 +10,7 @@ from utils.loggers.retrieval_logger import retrieval_logger
 
 
 class HybridRanker:
-    def __init__(self, alpha: float = 0.5):
+    def __init__(self, alpha: float = settings.ALPHA_WEIGHT):
         self.alpha = alpha
         app_logger.info(
             f"Đã khởi tạo HybridRanker bằng thuật toán Alpha Blending (Alpha={self.alpha})")
