@@ -91,7 +91,7 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
           type="file"
           ref={fileInputRef}
           onChange={handleFileChange}
-          accept=".pdf,.docx,.txt"
+          accept=".pdf,.docx,.xlsx,.pptx"
           className="hidden"
           disabled={isUploading}
         />
@@ -119,7 +119,7 @@ export const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
               </div>
               <div className="text-center">
                 <p className="text-sm font-semibold text-slate-700">Click để chọn tài liệu</p>
-                <p className="text-[10px] text-slate-400 uppercase font-bold mt-1">PDF, DOCX, TXT tối đa 20MB</p>
+                <p className="text-[10px] text-slate-400 uppercase font-bold mt-1">PDF, DOCX, XLSX, PPTX tối đa 20MB</p>
               </div>
             </div>
           ) : (
