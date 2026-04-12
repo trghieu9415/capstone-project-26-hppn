@@ -1,5 +1,9 @@
+from typing import Literal
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
+
+ThresholdType = Literal["percentile", "standard_deviation", "interquartile", "gradient"]
 
 
 class Settings(BaseSettings):
@@ -15,20 +19,24 @@ class Settings(BaseSettings):
     # 3. Cấu hình Vector DB (Qdrant)
     QDRANT_URL: str = Field(default="http://localhost:6333")
     QDRANT_API_KEY: str | None = Field(default=None)
-    QDRANT_COLLECTION: str = Field(default="document_chunks")
+    QDRANT_COLLECTION: str = Field(default="documents_collection")
 
     # Cấu hình Keyword DB (BM25)
     KEYWORD_DB_DIR: str = Field(default="data/keyword_db")
 
     # EMBEDDING_MODEL_NAME: str = Field(default="keepitreal/vietnamese-sbert")
     # EMBEDDING_MODEL_NAME: str = Field(default="dangvantuan/vietnamese-embedding")
-    # EMBEDDING_MODEL_NAME: str = Field(default="AITeamVN/Vietnamese_Embedding")
+    # EMBEDDING_MODEL_NAME: str = Field(default="BAAI/bge-m3")
     EMBEDDING_MODEL_NAME: str = Field(
         default="dangvantuan/vietnamese-document-embedding")
     EMBEDDING_BATCH_SIZE: int = Field(default=64)
+    VECTOR_SIZE: int = Field(default=768)
+
     CHUNK_SIZE: int = Field(default=512)
     CHUNK_OVERLAP: int = Field(default=100)
-    VECTOR_SIZE: int = Field(default=768)
+
+    THRESHOLD_TYPE: ThresholdType = Field(default="percentile")
+    THRESHOLD_VALUE: float = Field(default=0.9)
 
     ALPHA_WEIGHT: float = Field(default=0.35)
     CROSS_ENCODER_MODEL_NAME: str = Field(default="BAAI/bge-reranker-v2-m3")

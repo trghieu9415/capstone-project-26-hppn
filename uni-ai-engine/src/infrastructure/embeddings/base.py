@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Any, Dict
+
+from schemas.document import ParentNode, ChildNode
 
 
 class IEmbeddingService(ABC):
@@ -14,4 +16,11 @@ class IEmbeddingService(ABC):
     # Bổ sung hàm xử lý hàng loạt
     @abstractmethod
     async def embed_batch(self, texts: List[str]) -> List[List[float]]:
+        pass
+
+    async def chunk_and_embed(
+        self,
+        parent_node: ParentNode,
+        metadata: Dict[str, Any] = None
+    ) -> List[ChildNode]:
         pass

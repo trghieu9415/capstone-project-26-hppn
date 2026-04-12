@@ -3,7 +3,6 @@ import uuid
 from typing import List, Dict, Any
 from uuid import UUID
 
-from core.ingestion.chunker import TextChunker
 from core.ingestion.loader import DocumentLoader
 from schemas.document import ParentNode, ChildNode
 from infrastructure.storage.base import IDocumentStore, IVectorStore, IKeywordStore
@@ -25,7 +24,6 @@ class IngestionPipeline:
         self.embedding_service = embedding_service
 
         self.loader = DocumentLoader()
-        self.chunker = TextChunker()
 
     @staticmethod
     def _split_text_by_words(text: str, word_limit: int = 1200) -> List[str]:
@@ -50,7 +48,7 @@ class IngestionPipeline:
             clean_text = self.loader.load_and_clean(file_bytes, extension)
 
             parent_texts = self._split_text_by_words(clean_text, word_limit=1200)
-            app_logger.info(f"Tài liệu đã cắt thành {len(parent_texts)} đoạn")
+            app_logger.info(f"Tài liệu đã cắt thành {len(parent_texts)} đoạn Parent")
 
             parent_nodes: List[ParentNode] = []
             child_nodes: List[ChildNode] = []
@@ -66,26 +64,23 @@ class IngestionPipeline:
                 )
                 parent_nodes.append(p_node)
 
-                children = self.chunker.split_into_nodes(
+                app_logger.info(f"Nhúng và tạo ChildNode {i + 1}/{len(parent_texts)}")
+                children = await self.embedding_service.chunk_and_embed(
                     parent_node=p_node,
                     metadata=p_node.metadata
                 )
                 child_nodes.extend(children)
 
             if not child_nodes:
+                app_logger.warning(f"Không tạo được đoạn Child nào cho {file_name}")
                 return False
 
-            texts_to_embed = [node.text_chunk for node in child_nodes]
-            app_logger.info(f"Chuyển đổi texts sang embedding vectors")
-            embeddings = await self.embedding_service.embed_batch(texts_to_embed)
-
-            for i, node in enumerate(child_nodes):
-                node.embedding = embeddings[i]
-
             await self.vector_store.save_children(child_nodes)
-            app_logger.info(f"{file_name} Nhúng thành công {len(child_nodes)} Nodes.")
+            app_logger.info(
+                f"{file_name}: Nhúng & Lưu Qdrant thành công {len(child_nodes)} Nodes.")
+
             await self.keyword_store.save_children(child_nodes)
-            app_logger.info(f"Nạp thành công {file_name} vào KeywordStore.")
+            app_logger.info(f"Nạp thành công {file_name} vào KeywordStore (BM25).")
 
             await self.doc_store.save_parents(parent_nodes)
             app_logger.info(f"Đã lưu {len(parent_nodes)} đoạn parent vào Postgres.")

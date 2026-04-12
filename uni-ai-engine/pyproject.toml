@@ -15,6 +15,8 @@ dependencies = [
     "grpcio-tools>=1.71.2",
     "httpx>=0.28.1",
     "langchain>=1.2.10",
+    "langchain-experimental>=0.4.1",
+    "langchain-huggingface>=1.2.1",
     "langchain-text-splitters>=1.1.1",
     "loguru>=0.7.3",
     "ollama>=0.6.1",
@@ -34,18 +36,18 @@ dependencies = [
     "rank-bm25>=0.2.2",
     "sentence-transformers>=5.2.3",
     "sqlalchemy>=2.0.46",
-    "torch>=2.5.1",
-    "torchaudio>=2.5.1",
-    "torchvision>=0.20.1",
+    "torch>=2.6.0",
+    "torchaudio>=2.6.0",
+    "torchvision>=0.21.0",
     "uvicorn>=0.41.0",
 ]
 
 [[tool.uv.index]]
-name = "pytorch"
-url = "https://download.pytorch.org/whl/cu121"
+name = "pytorch-cu124"
+url = "https://download.pytorch.org/whl/cu124"
 explicit = true
 
 [tool.uv.sources]
-torch = { index = "pytorch" }
-torchvision = { index = "pytorch" }
-torchaudio = { index = "pytorch" }
+torch = { index = "pytorch-cu124" }
+torchvision = { index = "pytorch-cu124" }
+torchaudio = { index = "pytorch-cu124" }

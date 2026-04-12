@@ -12,5 +12,4 @@ class DocumentLoader:
             raise ValueError(f"Không thể trích xuất nội dung từ định dạng {extension}")
 
         clean_text = clean_text_pipeline(raw_text)
-
         return clean_text
