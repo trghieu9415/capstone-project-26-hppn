@@ -40,27 +40,29 @@ class RAGService:
         query: str,
         doc_ids: Optional[List[UUID]]
     ) -> List[ParentNode]:
-        vector_task = self.vector_retriever.retrieve(
-            query, doc_ids=doc_ids
-        )
-        keyword_task = self.keyword_retriever.retrieve(
-            query, doc_ids=doc_ids
-        )
-        vector_res, keyword_res = await asyncio.gather(vector_task, keyword_task)
+        vector_task = self.vector_retriever.retrieve(query, doc_ids=doc_ids)
+        keyword_task = self.keyword_retriever.retrieve(query, doc_ids=doc_ids)
 
+        # Vector search + Keyword search
+        start = asyncio.get_event_loop().time()
+        vector_res, keyword_res = await asyncio.gather(vector_task, keyword_task)
+        end = asyncio.get_event_loop().time()
+        app_logger.info(f"Time to retrieve: {end - start}s")
         retrieval_logger.log_vector_search(query, vector_res)
         retrieval_logger.log_keyword_search(query, keyword_res)
 
-        hybrid_nodes = self.hybrid_ranker.rerank(
-            vector_res, keyword_res
-        )
-
+        # Hybrid (Alpha Blending Re-rank)
+        start = asyncio.get_event_loop().time()
+        hybrid_nodes = self.hybrid_ranker.rerank(vector_res, keyword_res)
+        end = asyncio.get_event_loop().time()
+        app_logger.info(f"Time to hybrid re-rank: {end - start}s")
         retrieval_logger.log_hybrid_search(query, hybrid_nodes)
 
-        final_nodes = self.cross_encoder_ranker.rerank(
-            query, hybrid_nodes
-        )
-
+        # Cross-encoder (Re-rank)
+        start = asyncio.get_event_loop().time()
+        final_nodes = self.cross_encoder_ranker.rerank(query, hybrid_nodes)
+        end = asyncio.get_event_loop().time()
+        app_logger.info(f"Time to cross re-rank: {end - start}s")
         retrieval_logger.log_cross_encoder(query, final_nodes)
 
         if not final_nodes:
@@ -79,11 +81,10 @@ class RAGService:
         doc_names = await self.doc_store.get_doc_names_by_parent_ids(
             [node.id for node in parent_nodes]
         )
-        answer = await self.generator.generate(
-            query,
-            parent_nodes,
-            doc_names=doc_names
-        )
+        start = asyncio.get_event_loop().time()
+        answer = await self.generator.generate(query, parent_nodes, doc_names=doc_names)
+        end = asyncio.get_event_loop().time()
+        app_logger.info(f"Time to generate answer: {end - start}s")
 
         if self.evaluate_on:
             results = await self.evaluator.evaluate_answer(query, answer, parent_nodes)
