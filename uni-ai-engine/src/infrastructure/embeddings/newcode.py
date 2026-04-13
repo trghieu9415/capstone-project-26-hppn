@@ -1,6 +1,6 @@
-import asyncio
+﻿import asyncio
 import uuid
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Literal
 
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_experimental.text_splitter import SemanticChunker
@@ -14,35 +14,24 @@ from configs.settings import settings, ThresholdType
 class HuggingFaceAdapter(IEmbeddingService):
     def __init__(
         self,
-        embedding_model_name: str = settings.EMBEDDING_MODEL_NAME,
-        chunking_model_name: str = settings.CHUNKING_MODEL_NAME,
+        model_name: str = settings.EMBEDDING_MODEL_NAME,
         threshold_type: ThresholdType = settings.THRESHOLD_TYPE,
         threshold_value: float = settings.THRESHOLD_VALUE
     ):
-        app_logger.info(f"Đang tải Embedding Model CHÍNH: {embedding_model_name}...")
-        self.embedding_model = HuggingFaceEmbeddings(
-            model_name=embedding_model_name,
-            model_kwargs={'device': 'cuda', 'trust_remote_code': True},
-            encode_kwargs={
-                'normalize_embeddings': True,
-                'batch_size': settings.EMBEDDING_BATCH_SIZE
-            },
-            show_progress=True
-        )
+        app_logger.info(f"Đang tải siêu Model: {model_name} (Chunk & Embed)...")
 
-        app_logger.info(f"Đang tải Chunking Model PHỤ: {chunking_model_name}...")
-        self.chunking_model = HuggingFaceEmbeddings(
-            model_name=chunking_model_name,
+        self.langchain_embeddings = HuggingFaceEmbeddings(
+            model_name=model_name,
             model_kwargs={'device': 'cuda', 'trust_remote_code': True},
             encode_kwargs={
                 'normalize_embeddings': True,
-                'batch_size': settings.CHUNKING_BATCH_SIZE
+                'batch_size': 32
             },
             show_progress=True
         )
 
         self.splitter = SemanticChunker(
-            self.chunking_model,
+            self.langchain_embeddings,
             breakpoint_threshold_type=threshold_type,
             breakpoint_threshold_amount=threshold_value
         )
@@ -52,7 +41,7 @@ class HuggingFaceAdapter(IEmbeddingService):
             return []
         try:
             return await asyncio.to_thread(
-                self.embedding_model.embed_documents, texts
+                self.langchain_embeddings.embed_documents, texts
             )
         except Exception as e:
             app_logger.error(f"Lỗi khi tạo batch embedding: {e}")
@@ -61,7 +50,7 @@ class HuggingFaceAdapter(IEmbeddingService):
     async def embed_query(self, query: str) -> List[float]:
         try:
             return await asyncio.to_thread(
-                self.embedding_model.embed_query, query
+                self.langchain_embeddings.embed_query, query
             )
         except Exception as e:
             app_logger.error(f"Lỗi khi nhúng câu hỏi: {e}")

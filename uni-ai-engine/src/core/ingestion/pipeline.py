@@ -3,6 +3,8 @@ import uuid
 from typing import List, Dict, Any
 from uuid import UUID
 
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
 from core.ingestion.loader import DocumentLoader
 from schemas.document import ParentNode, ChildNode
 from infrastructure.storage.base import IDocumentStore, IVectorStore, IKeywordStore
@@ -26,10 +28,17 @@ class IngestionPipeline:
         self.loader = DocumentLoader()
 
     @staticmethod
-    def _split_text_by_words(text: str, word_limit: int = 1200) -> List[str]:
-        words = text.split()
-        return [" ".join(words[i: i + word_limit]) for i in
-                range(0, len(words), word_limit)]
+    def _split_text(text: str) -> list[str]:
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=6000,
+            chunk_overlap=0,
+            length_function=len,
+            is_separator_regex=False,
+            separators=["\n\n", "\n", "."]
+        )
+
+        chunks = text_splitter.split_text(text)
+        return chunks
 
     async def run(
         self,
@@ -47,7 +56,7 @@ class IngestionPipeline:
                 f"==> Bắt đầu nạp tài liệu {file_name}{extension} [ID: {doc_id}]")
             clean_text = self.loader.load_and_clean(file_bytes, extension)
 
-            parent_texts = self._split_text_by_words(clean_text, word_limit=1200)
+            parent_texts = self._split_text(clean_text)
             app_logger.info(f"Tài liệu đã cắt thành {len(parent_texts)} đoạn Parent")
 
             parent_nodes: List[ParentNode] = []

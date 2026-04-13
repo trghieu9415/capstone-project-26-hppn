@@ -26,19 +26,18 @@ class Settings(BaseSettings):
 
     # EMBEDDING_MODEL_NAME: str = Field(default="keepitreal/vietnamese-sbert")
     # EMBEDDING_MODEL_NAME: str = Field(default="dangvantuan/vietnamese-embedding")
-    # EMBEDDING_MODEL_NAME: str = Field(default="BAAI/bge-m3")
-    EMBEDDING_MODEL_NAME: str = Field(
-        default="dangvantuan/vietnamese-document-embedding")
-    EMBEDDING_BATCH_SIZE: int = Field(default=64)
-    VECTOR_SIZE: int = Field(default=768)
+    EMBEDDING_MODEL_NAME: str = Field(default="AITeamVN/Vietnamese_Embedding")
+    EMBEDDING_BATCH_SIZE: int = Field(default=8)
+    VECTOR_SIZE: int = Field(default=1024)
 
-    CHUNK_SIZE: int = Field(default=512)
-    CHUNK_OVERLAP: int = Field(default=100)
+    CHUNKING_MODEL_NAME: str = Field(
+        default="dangvantuan/vietnamese-document-embedding")
+    CHUNKING_BATCH_SIZE: int = Field(default=8)
 
     THRESHOLD_TYPE: ThresholdType = Field(default="percentile")
     THRESHOLD_VALUE: float = Field(default=0.9)
 
-    ALPHA_WEIGHT: float = Field(default=0.35)
+    ALPHA_WEIGHT: float = Field(default=0.5)
     CROSS_ENCODER_MODEL_NAME: str = Field(default="BAAI/bge-reranker-v2-m3")
     NLI_MODEL_NAME: str = Field(default="MoritzLaurer/mDeBERTa-v3-base-mnli-xnli")
     EVALUATE_ON: bool = Field(default=False)

@@ -47,7 +47,7 @@ async def init_dependencies():
     keyword_store = BM25KeywordStore(persist_dir=settings.KEYWORD_DB_DIR)
 
     # --- B.2 Khởi tạo Infrastructure Service Adapters ---
-    embedding_service = HuggingFaceAdapter(model_name=settings.EMBEDDING_MODEL_NAME)
+    embedding_service = HuggingFaceAdapter()
     llm_service = GeminiService(
         api_key=settings.GEMINI_API_KEY,
         model_name=settings.GEMINI_MODEL_NAME
