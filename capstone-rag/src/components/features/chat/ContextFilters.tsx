@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { FileText, Folder, Tag, X } from "lucide-react";
 import { motion } from "motion/react";
 import { useDocumentStore } from "@/stores/useDocumentStore";
@@ -12,8 +12,27 @@ export const ContextFilters: React.FC = () => {
   const { folders } = useFolderStore();
   const { tags } = useTagStore();
 
+  // Ref để xác định vùng của Filter Dialog
+  const filterContainerRef = useRef<HTMLDivElement>(null);
+
+  // Xử lý đóng dialog khi click ra ngoài
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        filterContainerRef.current && 
+        !filterContainerRef.current.contains(event.target as Node)
+      ) {
+        setShowFilters(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [setShowFilters]);
+
   return (
     <motion.div
+      ref={filterContainerRef}
       initial={{ opacity: 0, y: 10, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -33,6 +52,7 @@ export const ContextFilters: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-3 gap-6">
+        {/* Cột Tài liệu */}
         <div className="space-y-3">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
             <FileText size={12} />
@@ -60,6 +80,8 @@ export const ContextFilters: React.FC = () => {
             ))}
           </div>
         </div>
+
+        {/* Cột Thư mục */}
         <div className="space-y-3">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
             <Folder size={12} />
@@ -89,6 +111,8 @@ export const ContextFilters: React.FC = () => {
               ))}
           </div>
         </div>
+
+        {/* Cột Nhãn */}
         <div className="space-y-3">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
             <Tag size={12} />

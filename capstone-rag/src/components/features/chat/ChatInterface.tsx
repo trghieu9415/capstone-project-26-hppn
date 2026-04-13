@@ -15,17 +15,26 @@ export const ChatInterface: React.FC = () => {
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Tính tổng số lượng filters đang kích hoạt
+  const activeFiltersCount = filters.docIds.length + filters.folderIds.length + filters.tagIds.length;
+  const hasActiveFilters = activeFiltersCount > 0;
+
   const handleSendMessage = () => {
     if (!input.trim() || isReceiving) return;
-    askQuestion({ question: input, docIds: filters.docIds, folderIds: filters.folderIds, tagIds: filters.tagIds });
+    askQuestion({
+      question: input,
+      docIds: filters.docIds,
+      folderIds: filters.folderIds,
+      tagIds: filters.tagIds,
+    });
   };
 
-	const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault(); 
-    handleSendMessage();
-  }
-};
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -117,22 +126,34 @@ export const ChatInterface: React.FC = () => {
             <div className="relative w-full border border-slate-300 rounded-xl bg-white shadow-sm focus-within:ring-2 focus-within:ring-blue-500 transition-all">
               <textarea
                 className="w-full resize-none bg-transparent outline-none p-3 pb-14 min-h-12 max-h-30 overflow-y-auto rounded-xl text-slate-700"
-                placeholder="Nhập tin nhắn..."
+                placeholder="Nhập câu hỏi..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-								onKeyDown={handleKeyDown}
+                onKeyDown={handleKeyDown}
               />
 
               <div className="absolute right-2 bottom-2 flex items-center gap-2">
                 <button
-                  onClick={() => setShowFilters(!showFilters)}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Ngăn click-outside trigger ngay lập tức
+                    setShowFilters(!showFilters);
+                  }}
                   className={cn(
-                    "p-2 rounded-xl transition-all",
-                    showFilters ? "bg-blue-100 text-blue-600" : "text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                    "p-2 rounded-xl transition-all relative",
+                    showFilters || hasActiveFilters
+                      ? "bg-blue-100 text-blue-600 border border-blue-200"
+                      : "text-slate-400 hover:bg-slate-100 hover:text-slate-600 border border-transparent"
                   )}
                   title="Bộ lọc ngữ cảnh"
                 >
                   <Filter size={20} />
+
+                  {/* Badge hiển thị số lượng filter đang bật */}
+                  {hasActiveFilters && (
+                    <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[9px] font-bold text-white shadow-sm animate-in zoom-in">
+                      {activeFiltersCount}
+                    </span>
+                  )}
                 </button>
 
                 {isReceiving ? (
@@ -158,7 +179,8 @@ export const ChatInterface: React.FC = () => {
           </div>
 
           <p className="text-[10px] text-center text-slate-400 mt-3 font-medium">
-            AI có thể đưa ra thông tin chưa chính xác. Vui lòng kiểm tra lại các quy chế chính thức.
+            Kết quả được tổng hợp từ các tài liệu truy xuất trong hệ thống. Vui lòng đối chiếu với nguồn tham chiếu để
+            đảm bảo tính chính xác.
           </p>
         </div>
       </div>

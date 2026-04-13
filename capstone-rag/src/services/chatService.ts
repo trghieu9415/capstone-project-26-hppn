@@ -10,7 +10,7 @@ export const chatService = {
 
   askStream: async (data: QueryRequestDTO, onChunk: (text: string) => void): Promise<void> => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+    const baseUrl = "http://localhost:8080";
 
     const response = await fetch(`${baseUrl}/api/query/ask/stream`, {
       method: "POST",
