@@ -87,8 +87,8 @@ public class RagGrpcClientImpl implements RagGrpcClient {
 
             requestObserver.onCompleted();
 
-            if (!finishLatch.await(7, TimeUnit.MINUTES)) {
-                throw new RuntimeException("Timeout waiting for AI Engine (Quá 7 phút)");
+            if (!finishLatch.await(20, TimeUnit.MINUTES)) {
+                throw new RuntimeException("Timeout waiting for AI Engine (Quá 20 phút)");
             }
 
             if (errorRef.get() != null) {
