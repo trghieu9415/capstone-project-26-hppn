@@ -81,7 +81,7 @@ export const FolderDialog: React.FC<FolderDialogProps> = ({
                 parentId === null ? "bg-blue-600 text-white shadow-md" : "hover:bg-slate-100 text-slate-600"
               }`}
             >
-              <span className="text-sm font-medium">Gốc (Không có cha)</span>
+              <span className="text-sm font-medium">Gốc</span>
             </div>
             {rootFolders.map((folder) => (
               <TreeSelectNode
